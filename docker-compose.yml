@@ -1,0 +1,59 @@
+# Arketo backend — web (Django) + db (PostgreSQL).
+#
+#   docker compose up -d db        # just Postgres (run Django on the host)
+#   docker compose up --build      # full stack; API on http://localhost:8000
+#
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-arketo}
+      POSTGRES_USER: ${POSTGRES_USER:-arketo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-arketo}
+    ports:
+      # Host port is configurable to avoid clashing with a local Postgres.
+      # Override with DB_HOST_PORT in .env (this machine uses 55432).
+      - "${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-arketo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # S3-compatible storage for local dev (set USE_S3=true + the MinIO vars in .env).
+  #   docker compose up -d minio   ->  S3 API :9000, consola web :9001 (minioadmin/minioadmin)
+  #   Crea el bucket 'arketo-media' en la consola o con mc.
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.dev
+      # Inside the network the DB host is the service name `db`.
+      DATABASE_URL: postgres://${POSTGRES_USER:-arketo}:${POSTGRES_PASSWORD:-arketo}@db:5432/${POSTGRES_DB:-arketo}
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  miniodata:

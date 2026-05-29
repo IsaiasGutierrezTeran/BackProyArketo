@@ -1,0 +1,10 @@
+{
+  "comment": "Apps are grouped under apps/sprint_N/ but imported by short name; these extraPaths let Pylance/Pyright resolve them in the editor.",
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": [
+    "apps/sprint_1",
+    "apps/sprint_2",
+    "apps/sprint_3"
+  ]
+}
