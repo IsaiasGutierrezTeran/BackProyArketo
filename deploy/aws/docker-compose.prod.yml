@@ -1,0 +1,95 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Stack de producción de Arketo — todo dentro de la EC2 ("todo en AWS").
+#   db        : PostgreSQL (volumen persistente; SIN puerto expuesto)
+#   maskrcnn  : Flask + Mask R-CNN (TF1.15) — INTERNO, solo lo llama floorapi
+#   floorapi  : FastAPI 2D->3D — INTERNO, lo llama django; apunta a maskrcnn
+#   backend   : Django (migrate + gunicorn) — detrás de nginx
+#   nginx     : reverse proxy (puerto 80) → /api (django), /floor (floorapi)
+#   caddy     : TLS automático (Let's Encrypt) en 443 vía dominio sslip.io
+# Los ${...} salen del .env que genera deploy.sh en la instancia.
+# ──────────────────────────────────────────────────────────────────────────────
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [arketo_net]
+    # Sin `ports`: la BD solo es alcanzable dentro de la red del compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  maskrcnn:
+    image: "${ECR_MASKRCNN}"
+    restart: always
+    # Modelo real (Python 3.6 / TF1.15). Los pesos se montan desde el host
+    # (deploy.sh los bajó de S3 a /opt/arketo/weights). NO se exponen puertos:
+    # solo floorapi lo alcanza por la red interna en maskrcnn:5000.
+    volumes:
+      - ./weights:/app/weights:ro
+    networks: [arketo_net]
+
+  floorapi:
+    image: "${ECR_FLOORAPI}"
+    restart: always
+    depends_on: [maskrcnn]
+    environment:
+      DETECTOR: "maskrcnn"
+      MODEL_NAME: "maskrcnn-resnet101"
+      LEGACY_API_URL: "${MASKRCNN_LEGACY_URL:-http://maskrcnn:5000/}"
+      LEGACY_API_TIMEOUT: "180"
+      FALLBACK_TO_OPENCV: "true"
+      CORS_ORIGINS: "*"
+    networks: [arketo_net]
+
+  backend:
+    image: "${ECR_BACKEND}"
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: [.env]
+    # La imagen ya hace `migrate --noinput && gunicorn` (config.settings.prod).
+    networks: [arketo_net]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: always
+    depends_on: [backend, floorapi]
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks: [arketo_net]
+
+  # TLS automático vía dominio sslip.io que resuelve a la IP de la EC2. Permite
+  # que el front HTTPS (Vercel/S3) y la app Flutter consuman el backend sin
+  # mixed-content / cleartext. Reenvía todo a nginx.
+  caddy:
+    image: caddy:2-alpine
+    restart: always
+    depends_on: [nginx]
+    ports:
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [arketo_net]
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  arketo_net:
+    driver: bridge

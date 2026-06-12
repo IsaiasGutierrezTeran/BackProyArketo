@@ -1,0 +1,5 @@
+# Secretos y artefactos generados por deploy.sh — NUNCA commitear.
+*.pem
+Caddyfile
+.env
+deploy.log
