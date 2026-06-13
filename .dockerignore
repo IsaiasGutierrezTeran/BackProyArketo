@@ -1,0 +1,30 @@
+# Python envs / caches (the image installs deps from requirements.txt)
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# VCS / tooling
+.git/
+.gitignore
+.pytest_cache/
+.vscode/
+.idea/
+
+# Secrets & local config (provided at runtime via env_file, never baked in)
+.env
+.env.*
+!.env.example
+
+# Deploy scripts + SSH key (must NOT end up in the image)
+deploy/
+
+# Local data / artifacts
+*.sqlite3
+db.sqlite3
+media/
+staticfiles/
+*.log

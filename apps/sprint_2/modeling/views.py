@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from drf_spectacular.utils import extend_schema
+from django.http import HttpResponse
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,7 +13,7 @@ from core.exceptions import ApiException
 from core.utils import absolute_media_url
 from projects.services import assert_can_edit_project, projects_for
 
-from . import services
+from . import plan2d, services
 from .models import Model3D
 from .serializers import ImportGlbSerializer, Model3DSerializer, SceneEditSerializer
 
@@ -61,6 +62,28 @@ class Model3DViewSet(
                 "glb_url": absolute_media_url(model.glb_file, request),
             }
         )
+
+    @extend_schema(
+        summary="Renderizar el plano 2D (PNG) al vuelo desde la escena del modelo",
+        responses={200: OpenApiResponse(description="Imagen PNG del plano")},
+    )
+    @action(detail=True, methods=["get"], url_path="plan.png")
+    def plan_png(self, request, pk=None):
+        model = self.get_object()
+        png = plan2d.render_png(model.scene_json or {})
+        return HttpResponse(png, content_type="image/png")
+
+    @extend_schema(
+        summary="Renderizar el plano 2D (PDF) al vuelo desde la escena del modelo",
+        responses={200: OpenApiResponse(description="Documento PDF del plano")},
+    )
+    @action(detail=True, methods=["get"], url_path="plan.pdf")
+    def plan_pdf(self, request, pk=None):
+        model = self.get_object()
+        pdf = plan2d.render_pdf(model.scene_json or {})
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="plano_{model.pk}.pdf"'
+        return response
 
     @extend_schema(
         request=ImportGlbSerializer,

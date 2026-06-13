@@ -58,6 +58,43 @@ def test_export_returns_glb_url(make_user, auth_client):
     assert resp.json()["data"]["format"] == "glb"
 
 
+def test_plan_png_renders_image(make_user, auth_client):
+    user = make_user()
+    model = _model(user)
+    client = auth_client(user)
+    resp = client.get(f"/api/models3d/{model.id}/plan.png")
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "image/png"
+    assert resp.content[:4] == b"\x89PNG"  # raw bytes, NOT wrapped in the envelope
+
+
+def test_plan_pdf_downloads_attachment(make_user, auth_client):
+    user = make_user()
+    model = _model(user)
+    client = auth_client(user)
+    resp = client.get(f"/api/models3d/{model.id}/plan.pdf")
+    assert resp.status_code == 200
+    assert resp["Content-Type"] == "application/pdf"
+    assert resp["Content-Disposition"] == f'attachment; filename="plano_{model.id}.pdf"'
+    assert resp.content[:4] == b"%PDF"
+
+
+def test_plan_png_requires_auth(make_user, api_client):
+    user = make_user()
+    model = _model(user)
+    resp = api_client.get(f"/api/models3d/{model.id}/plan.png")
+    assert resp.status_code == 401
+
+
+def test_plan_png_scoped_to_user_projects(make_user, auth_client):
+    owner = make_user(email="owner@test.dev")
+    model = _model(owner)
+    other = make_user(email="other@test.dev")
+    client = auth_client(other)
+    resp = client.get(f"/api/models3d/{model.id}/plan.png")
+    assert resp.status_code == 404
+
+
 def test_import_glb(make_user, auth_client):
     user = make_user()
     project = Project.objects.create(owner=user, name="P")
