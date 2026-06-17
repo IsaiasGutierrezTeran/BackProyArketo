@@ -13,8 +13,7 @@ from core.aws_ai import bedrock_generate_text
 from core.exceptions import ApiException
 
 from .base import DesignProviderBase
-from .gemini import _SCENE_PROMPT, _extract_json
-from .mock import rectangular_room_scene
+from .gemini import _SCENE_PROMPT, _extract_json, _normalize_scene
 
 
 class AwsDesignProvider(DesignProviderBase):
@@ -29,14 +28,7 @@ class AwsDesignProvider(DesignProviderBase):
                 "La IA no devolvió un plano válido. Reintenta con más detalle.",
                 code="inference_error", status_code=502,
             ) from exc
-        scene.setdefault("walls", [])
-        scene.setdefault("doors", [])
-        scene.setdefault("windows", [])
-        if not scene["walls"]:
-            scene = rectangular_room_scene(5.0, 4.0)
-        scene.setdefault("meta", {"model": "bedrock-design", "version": "1.0"})
-        scene.setdefault("image", {"unit": "meters", "pixels_per_meter": None})
-        return scene
+        return _normalize_scene(scene, model="bedrock-design", prompt=prompt or "")
 
     def chat(self, messages: list[dict]) -> str:
         convo = "\n".join(f"{m.get('role')}: {m.get('content')}" for m in messages)

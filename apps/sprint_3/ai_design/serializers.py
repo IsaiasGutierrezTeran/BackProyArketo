@@ -29,17 +29,17 @@ class DesignRequestSerializer(serializers.ModelSerializer):
 class TextDesignSerializer(serializers.Serializer):
     prompt = serializers.CharField()
     project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini"], required=False, allow_null=True)
+    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)
 
 
 class AudioDesignSerializer(serializers.Serializer):
     audio = serializers.FileField()
     project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini"], required=False, allow_null=True)
+    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)
 
 
 class AssistantSerializer(serializers.Serializer):
     message = serializers.CharField()
     request = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini"], required=False, allow_null=True)
+    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)

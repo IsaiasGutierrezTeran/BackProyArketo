@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.db import transaction
 
 from core.exceptions import ApiException
 from modeling.services import create_model_from_scene
@@ -57,21 +58,32 @@ def generate_from_text(*, user, prompt: str, project_id: int | None = None,
         transcript=transcript, provider=provider.name, status=DesignStatus.PENDING,
     )
     try:
+        # La llamada al proveedor (posible red/LLM) queda FUERA de la transacción
+        # para no mantener abierta una conexión de BD durante la inferencia.
         scene = provider.generate_scene(prompt)
-        model = (
-            create_model_from_scene(project=project, scene_json=scene)
-            if project else None
-        )
+        with transaction.atomic():
+            model = (
+                create_model_from_scene(project=project, scene_json=scene)
+                if project else None
+            )
     except ApiException as exc:
         request.status = DesignStatus.FAILED
         request.error = str(exc.detail)[:2000]
         request.save(update_fields=["status", "error", "updated_at"])
         raise
+    except Exception as exc:  # noqa: BLE001 — cualquier fallo no controlado deja FAILED, no PENDING
+        request.status = DesignStatus.FAILED
+        request.error = str(exc)[:2000]
+        request.save(update_fields=["status", "error", "updated_at"])
+        raise ApiException(
+            "No se pudo generar el diseño. Reintenta más tarde.",
+            code="inference_error", status_code=502,
+        ) from exc
 
     request.result = {"scene": scene}
     request.model3d = model
     request.status = DesignStatus.COMPLETED
-    request.save()
+    request.save(update_fields=["result", "model3d", "status", "updated_at"])
     return request
 
 
