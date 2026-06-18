@@ -53,7 +53,18 @@ def bedrock_generate_text(
     if system:
         body["system"] = system
     try:
-        resp = _client("bedrock-runtime").invoke_model(modelId=model_id, body=json.dumps(body))
+        import boto3
+        from botocore.config import Config
+
+        # Pocos reintentos: si la cuota está en 0 (cuenta nueva) el throttle es
+        # definitivo, así el fallback del proveedor responde casi al instante;
+        # read_timeout amplio porque una generación real de Claude puede tardar.
+        client = boto3.client(
+            "bedrock-runtime", region_name=_region(),
+            config=Config(retries={"max_attempts": 2, "mode": "standard"},
+                          connect_timeout=5, read_timeout=60),
+        )
+        resp = client.invoke_model(modelId=model_id, body=json.dumps(body))
         payload = json.loads(resp["body"].read())
     except Exception as exc:  # boto3 ClientError, JSON, etc.
         raise ApiException(

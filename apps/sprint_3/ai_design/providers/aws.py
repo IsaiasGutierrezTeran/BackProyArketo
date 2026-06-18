@@ -20,14 +20,21 @@ class AwsDesignProvider(DesignProviderBase):
     name = "aws"
 
     def generate_scene(self, prompt: str) -> dict:
-        text = bedrock_generate_text(_SCENE_PROMPT + (prompt or ""), max_tokens=2000)
         try:
+            text = bedrock_generate_text(_SCENE_PROMPT + (prompt or ""), max_tokens=2000)
             scene = _extract_json(text)
-        except (ValueError, json.JSONDecodeError) as exc:
-            raise ApiException(
-                "La IA no devolvió un plano válido. Reintenta con más detalle.",
-                code="inference_error", status_code=502,
-            ) from exc
+        except (ApiException, ValueError, json.JSONDecodeError):
+            # Bedrock no disponible (cuota/throttle de cuenta nueva, respuesta no
+            # parseable, etc.): NO romper con 502. Degradamos a la planta
+            # procedural *program-aware* y lo marcamos como fallback. Cuando AWS
+            # libere la cuota de Claude, este bloque deja de ejecutarse solo.
+            from .mock import MockDesignProvider
+
+            scene = MockDesignProvider().generate_scene(prompt or "")
+            scene.setdefault("meta", {})
+            scene["meta"]["fallback"] = True
+            scene["meta"]["intended_model"] = "bedrock-design"
+            return scene
         return _normalize_scene(scene, model="bedrock-design", prompt=prompt or "")
 
     def chat(self, messages: list[dict]) -> str:
