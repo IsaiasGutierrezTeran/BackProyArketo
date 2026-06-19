@@ -17,6 +17,65 @@ def _element_count(scene_json: dict) -> int:
     )
 
 
+def _scene_span(scene_json: dict) -> float:
+    """Largest XY extent of the geometry (meters or normalized units)."""
+    xs: list[float] = []
+    ys: list[float] = []
+    for w in scene_json.get("walls") or []:
+        for pt in (w.get("start") or {}, w.get("end") or {}):
+            if isinstance(pt.get("x"), (int, float)):
+                xs.append(pt["x"]); ys.append(pt.get("y", 0) or 0)
+    for coll in ("doors", "windows"):
+        for d in scene_json.get(coll) or []:
+            p = d.get("position") or {}
+            if isinstance(p.get("x"), (int, float)):
+                xs.append(p["x"]); ys.append(p.get("y", 0) or 0)
+    if not xs:
+        return 0.0
+    return max(max(xs) - min(xs), max(ys) - min(ys))
+
+
+def _ensure_metric_scale(scene_json: dict, *, trigger_below: float = 5.5,
+                         target_longest: float = 12.0) -> dict:
+    """Rescale a normalized/tiny scene so its longest side ~= ``target_longest`` m.
+
+    Detector output without ``pixels_per_meter`` comes back in 0..1 units, which
+    the 2D renderer would draw as ~0.5 m and the 3D builder would rescale on its
+    own — leaving 2D and 3D at different scales. Doing it here, once, keeps both
+    consistent. No-op for scenes already in meters (span >= trigger). Wall
+    thickness is left untouched (the detector emits it already in meters).
+    """
+    span = _scene_span(scene_json)
+    if span <= 0 or span >= trigger_below:
+        return scene_json
+    f = target_longest / span
+    for w in scene_json.get("walls") or []:
+        for key in ("start", "end"):
+            p = w.get(key) or {}
+            if isinstance(p.get("x"), (int, float)):
+                p["x"] *= f
+            if isinstance(p.get("y"), (int, float)):
+                p["y"] *= f
+    for coll in ("doors", "windows"):
+        for d in scene_json.get(coll) or []:
+            p = d.get("position") or {}
+            if isinstance(p.get("x"), (int, float)):
+                p["x"] *= f
+            if isinstance(p.get("y"), (int, float)):
+                p["y"] *= f
+            if isinstance(d.get("width"), (int, float)):
+                d["width"] *= f
+    b = scene_json.get("bounds")
+    if isinstance(b, dict):
+        for k in ("min_x", "min_y", "max_x", "max_y"):
+            if isinstance(b.get(k), (int, float)):
+                b[k] *= f
+    img = scene_json.setdefault("image", {})
+    img["unit"] = "meters"
+    scene_json.setdefault("meta", {})["rescaled_from"] = round(span, 4)
+    return scene_json
+
+
 def _set_only_current(project, model: Model3D) -> None:
     Model3D.objects.filter(project=project, is_current=True).exclude(pk=model.pk).update(
         is_current=False
@@ -25,6 +84,7 @@ def _set_only_current(project, model: Model3D) -> None:
 
 def create_model_from_scene(*, project, scene_json: dict, source_plan=None) -> Model3D:
     """Build a GLB from a scene and store it as the project's current model (CU5)."""
+    scene_json = _ensure_metric_scale(scene_json)
     glb = build_glb_bytes(scene_json)
     model = Model3D(
         project=project,

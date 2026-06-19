@@ -8,12 +8,18 @@ from core.exceptions import ApiException
 from modeling.services import create_model_from_scene
 from plans.models import Plan, PlanStatus
 
-from .detectors import DetectorBase, MaskRCNNDetector, MockDetector
+from .detectors import (
+    DetectorBase,
+    MaskRCNNDetector,
+    MockDetector,
+    VisionLLMDetector,
+)
 from .models import DetectionJob, JobStatus
 
 _DETECTORS: dict[str, type[DetectorBase]] = {
     "mock": MockDetector,
     "maskrcnn": MaskRCNNDetector,
+    "gemini-vision": VisionLLMDetector,
 }
 
 
@@ -51,6 +57,13 @@ def run_pipeline(*, plan: Plan, detector_name: str | None = None,
     started = time.perf_counter()
     try:
         scene = detector.detect(_read_image_bytes(plan), options=options or {})
+        if not (scene.get("walls")):
+            raise ApiException(
+                "No se detectaron muros en este plano. Sube un plano técnico de "
+                "líneas (preferible blanco y negro), prueba el detector de visión "
+                "IA, o usa 'Diseñar con IA' por texto.",
+                code="unprocessable", status_code=422,
+            )
         model3d = create_model_from_scene(
             project=plan.project, scene_json=scene, source_plan=plan,
         )

@@ -14,7 +14,7 @@ class RunDetectionSerializer(serializers.Serializer):
 
     plan = serializers.IntegerField(min_value=1)
     detector = serializers.ChoiceField(
-        choices=["mock", "maskrcnn"], required=False, allow_null=True
+        choices=["mock", "maskrcnn", "gemini-vision"], required=False, allow_null=True
     )
     pixels_per_meter = serializers.FloatField(required=False, allow_null=True, min_value=0.0001)
     confidence_threshold = serializers.FloatField(
