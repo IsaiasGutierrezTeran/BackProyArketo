@@ -154,7 +154,7 @@ class Command(BaseCommand):
             # Vary the workflow: draft / submitted / reviewed.
             phase = i % 3
             if phase >= 1:
-                submit_budget(budget=budget)
+                submit_budget(user=owner, budget=budget)
             if phase == 2 and engineer:
                 decision = "approved" if i % 2 == 0 else "observed"
                 review_budget(

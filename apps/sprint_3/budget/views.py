@@ -84,8 +84,11 @@ class BudgetViewSet(
                    summary="Enviar el presupuesto a revisión")
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
-        budget = services.submit_budget(budget=self.get_object())
+        budget = services.submit_budget(user=request.user, budget=self.get_object())
         return Response(BudgetSerializer(budget, context={"request": request}).data)
+
+    def perform_destroy(self, instance):
+        services.delete_budget(user=self.request.user, budget=instance)
 
     @extend_schema(request=BudgetReviewInputSerializer, responses={200: BudgetSerializer},
                    summary="Revisión del Ingeniero (aprobar/observar/rechazar)")

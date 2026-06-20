@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
 from core.exceptions import ApiException, Conflict
 from projects.services import assert_can_edit_project, projects_for
@@ -15,11 +15,20 @@ from .models import Budget, BudgetItem, BudgetReview, BudgetStatus, Material
 
 
 def budgets_for(user) -> QuerySet[Budget]:
-    """Owners see their project budgets; engineers/superadmin see all (to review)."""
+    """Scope de presupuestos por rol (HU-12/HU-13).
+
+    - superadmin: todos.
+    - ingeniero (revisor): los de sus propios proyectos + cualquiera ya ENVIADO a
+      revisión (no ve borradores ajenos).
+    - cliente/arquitecto: solo los de los proyectos de los que es miembro.
+    """
     qs = Budget.objects.prefetch_related("items", "review")
-    if getattr(user, "is_superadmin", False) or getattr(user, "is_ingeniero", False):
+    if getattr(user, "is_superadmin", False):
         return qs
-    return qs.filter(project__in=projects_for(user))
+    own = Q(project__in=projects_for(user))
+    if getattr(user, "is_ingeniero", False):
+        return qs.filter(own | ~Q(status=BudgetStatus.DRAFT))
+    return qs.filter(own)
 
 
 def _assert_project_access(user, project_id: int):
@@ -67,12 +76,22 @@ def create_budget(*, user, project_id: int, items: list[dict],
     return budget
 
 
-def submit_budget(*, budget: Budget) -> Budget:
+def submit_budget(*, user, budget: Budget) -> Budget:
+    # Solo el autor/editor del proyecto puede enviar a revisión (no el revisor).
+    _assert_project_access(user, budget.project_id)
     if budget.status not in {BudgetStatus.DRAFT, BudgetStatus.OBSERVED}:
         raise Conflict("Solo se puede enviar un presupuesto en borrador u observado.")
     budget.status = BudgetStatus.SUBMITTED
     budget.save(update_fields=["status", "updated_at"])
     return budget
+
+
+def delete_budget(*, user, budget: Budget) -> None:
+    """Borra un presupuesto: solo autor/editor del proyecto y si no está aprobado."""
+    _assert_project_access(user, budget.project_id)
+    if budget.status == BudgetStatus.APPROVED:
+        raise Conflict("No se puede eliminar un presupuesto aprobado.")
+    budget.delete()
 
 
 _DECISION_TO_STATUS = {
