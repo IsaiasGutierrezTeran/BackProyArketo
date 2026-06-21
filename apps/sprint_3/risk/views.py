@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.reports import risk_report_pdf
 from projects.services import projects_for
 
 from . import services
@@ -49,3 +52,11 @@ class RiskAnalysisViewSet(
         return RiskAnalysis.objects.filter(
             model3d__project__in=projects_for(user)
         ).prefetch_related("findings")
+
+    @extend_schema(responses={200: None}, summary="Descargar el reporte de riesgos en PDF")
+    @action(detail=True, methods=["get"], url_path="report.pdf")
+    def report_pdf(self, request, pk=None):
+        analysis = self.get_object()
+        resp = HttpResponse(risk_report_pdf(analysis), content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="riesgos-{analysis.id}.pdf"'
+        return resp

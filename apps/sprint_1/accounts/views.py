@@ -26,6 +26,7 @@ from core.permissions import IsSuperAdmin
 from . import services
 from .serializers import (
     AdminUserSerializer,
+    ChangePasswordSerializer,
     LoginSerializer,
     ProfileUpdateSerializer,
     RegisterSerializer,
@@ -58,10 +59,11 @@ class RegisterView(APIView):
 
 @extend_schema(tags=["auth"], summary="Iniciar sesión (devuelve access, refresh y user)")
 class LoginView(TokenObtainPairView):
-    """Email + password -> {access, refresh, user}."""
+    """Email + password -> {access, refresh, user}. Rate-limited (HU-2)."""
 
     serializer_class = LoginSerializer
     permission_classes = [AllowAny]
+    throttle_scope = "login"
 
 
 @extend_schema(tags=["auth"])
@@ -102,6 +104,28 @@ class MeView(APIView):
         serializer.is_valid(raise_exception=True)
         user = services.update_profile(request.user, **serializer.validated_data)
         return Response(UserSerializer(user, context={"request": request}).data)
+
+
+@extend_schema(tags=["auth"])
+class ChangePasswordView(APIView):
+    """Change the authenticated user's own password (HU-3)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=ChangePasswordSerializer,
+        responses={200: OpenApiResponse(description="Contraseña actualizada.")},
+        summary="Cambiar mi contraseña",
+    )
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer.is_valid(raise_exception=True)
+        services.change_password(
+            request.user,
+            current_password=serializer.validated_data["current_password"],
+            new_password=serializer.validated_data["new_password"],
+        )
+        return Response({"detail": "Contraseña actualizada."}, status=status.HTTP_200_OK)
 
 
 @extend_schema(tags=["users"])

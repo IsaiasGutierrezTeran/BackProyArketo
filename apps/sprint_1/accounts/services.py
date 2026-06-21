@@ -25,12 +25,19 @@ def register_user(*, email: str, password: str, full_name: str = "", phone: str 
 
 
 def update_profile(user: "User", **fields) -> "User":
-    """Update the caller's own profile fields and persist."""
-    allowed = {"full_name", "phone", "avatar"}
+    """Update the caller's own profile fields and persist (HU-3)."""
+    allowed = {"full_name", "phone", "avatar", "email"}
     for key, value in fields.items():
         if key in allowed:
             setattr(user, key, value)
     user.save(update_fields=[f for f in fields if f in allowed] or None)
+    return user
+
+
+def change_password(user: "User", *, current_password: str, new_password: str) -> "User":
+    """Set a new password for the caller (current already verified in serializer)."""
+    user.set_password(new_password)
+    user.save(update_fields=["password"])
     return user
 
 

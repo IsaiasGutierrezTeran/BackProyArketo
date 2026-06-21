@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from django.http import HttpResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -9,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.permissions import IsSuperAdmin
+from core.reports import budget_report_pdf
 
 from . import services
 from .models import Material, MaterialCategory
@@ -40,6 +42,16 @@ class MaterialCategoryViewSet(_ReadAnyWriteSuperAdmin):
 class MaterialViewSet(_ReadAnyWriteSuperAdmin):
     queryset = Material.objects.select_related("category").all()
     serializer_class = MaterialSerializer
+
+    def get_queryset(self):
+        # HU-11: un material inactivo no aparece en nuevos presupuestos.
+        # El superadmin puede verlos con ?include_inactive=true para gestionarlos.
+        qs = super().get_queryset()
+        user = getattr(self.request, "user", None)
+        include_inactive = self.request.query_params.get("include_inactive") == "true"
+        if getattr(user, "is_superadmin", False) and include_inactive:
+            return qs
+        return qs.filter(is_active=True)
 
 
 @extend_schema(tags=["budget"])
@@ -89,6 +101,14 @@ class BudgetViewSet(
 
     def perform_destroy(self, instance):
         services.delete_budget(user=self.request.user, budget=instance)
+
+    @extend_schema(responses={200: None}, summary="Descargar el presupuesto en PDF")
+    @action(detail=True, methods=["get"], url_path="export.pdf")
+    def export_pdf(self, request, pk=None):
+        budget = self.get_object()
+        resp = HttpResponse(budget_report_pdf(budget), content_type="application/pdf")
+        resp["Content-Disposition"] = f'inline; filename="presupuesto-{budget.id}.pdf"'
+        return resp
 
     @extend_schema(request=BudgetReviewInputSerializer, responses={200: BudgetSerializer},
                    summary="Revisión del Ingeniero (aprobar/observar/rechazar)")

@@ -42,13 +42,33 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
-    """Edit own profile (full_name, phone, avatar)."""
+    """Edit own profile (full_name, phone, avatar, email). HU-3."""
 
+    full_name = serializers.CharField(required=False, allow_blank=False)
     phone = serializers.CharField(required=False, allow_blank=True, validators=[validate_phone])
+    email = serializers.EmailField(required=False)
 
     class Meta:
         model = User
-        fields = ["full_name", "phone", "avatar"]
+        fields = ["full_name", "phone", "avatar", "email"]
+
+    def validate_email(self, value):
+        user = self.context["request"].user
+        if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
+            raise serializers.ValidationError("Ya existe una cuenta con ese correo.")
+        return value
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    """Self password change: verify current, validate + set new (HU-3)."""
+
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, validators=[validate_user_password])
+
+    def validate_current_password(self, value):
+        if not self.context["request"].user.check_password(value):
+            raise serializers.ValidationError("La contraseña actual no es correcta.")
+        return value
 
 
 class AdminUserSerializer(serializers.ModelSerializer):
