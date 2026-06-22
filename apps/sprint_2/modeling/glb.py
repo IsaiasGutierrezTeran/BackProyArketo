@@ -128,32 +128,67 @@ def _add_baseboard(scene, sx, sy, ex, ey, thickness, name="baseboard"):
     scene.add_geometry(bb, geom_name=name)
 
 
-def _add_opening_frame(scene, x, z, width, sill, height, name="frame"):
-    """A simple casing around a door/window: 2 jambs + head (+ sill for windows)."""
+def _seg_dist2(px, py, ax, ay, bx, by) -> float:
+    """Squared distance from point (px,py) to segment a-b (plan space)."""
+    dx, dy = bx - ax, by - ay
+    length2 = dx * dx + dy * dy
+    if length2 <= 1e-12:
+        return (px - ax) ** 2 + (py - ay) ** 2
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length2))
+    cx, cy = ax + t * dx, ay + t * dy
+    return (px - cx) ** 2 + (py - cy) ** 2
+
+
+def _host_wall(scene_json: dict, px: float, py: float):
+    """(rotation, thickness) of the wall nearest the opening (plan coords).
+
+    The opening's panel and casing must align with their host wall; otherwise
+    they stay axis-aligned and look like they stick out of vertical/angled walls.
+    """
+    best_d = float("inf")
+    rot, thickness = 0.0, 0.2
+    for wall in scene_json.get("walls") or []:
+        start, end = wall.get("start") or {}, wall.get("end") or {}
+        ax, ay = float(start.get("x", 0.0)), float(start.get("y", 0.0))
+        bx, by = float(end.get("x", 0.0)), float(end.get("y", 0.0))
+        d = _seg_dist2(px, py, ax, ay, bx, by)
+        if d < best_d:
+            best_d = d
+            rot = -math.atan2(by - ay, bx - ax)
+            thickness = max(float(wall.get("thickness") or 0.15), 0.18)
+    return rot, thickness
+
+
+def _place_in_opening(scene, extents, material, *, x, z, ly, rot, lx=0.0, lz=0.0, name):
+    """Place an opening sub-box: local offset (lx along the wall, lz across it) and
+    vertical center ly, rotated to the host-wall angle, then moved to world (x, z)."""
+    mesh = _box(extents, material)
+    t1 = trimesh.transformations.translation_matrix([lx, ly, lz])
+    r = trimesh.transformations.rotation_matrix(rot, [0, 1, 0])
+    t2 = trimesh.transformations.translation_matrix([x, 0.0, z])
+    mesh.apply_transform(t2 @ r @ t1)
+    scene.add_geometry(mesh, geom_name=name)
+
+
+def _add_opening_frame(scene, x, z, width, sill, height, *, rot, casing_depth, name="frame"):
+    """A simple casing around a door/window: 2 jambs + head (+ sill for windows).
+
+    Aligned to the host wall (``rot``) and flush within its thickness (``casing_depth``).
+    """
     if width <= 0.01 or height <= 0.01:
         return
     top = sill + height
     outer_w = width + 2.0 * _CASING_W
-    head = _box([outer_w, _CASING_W, _CASING_DEPTH], FRAME_MATERIAL)
-    head.apply_transform(
-        trimesh.transformations.translation_matrix([x, top + _CASING_W / 2.0, z])
-    )
-    scene.add_geometry(head, geom_name=name + "_head")
+    _place_in_opening(scene, [outer_w, _CASING_W, casing_depth], FRAME_MATERIAL,
+                      x=x, z=z, ly=top + _CASING_W / 2.0, rot=rot, name=name + "_head")
     jamb_h = height + _CASING_W
     for sign in (-1.0, 1.0):
-        jamb = _box([_CASING_W, jamb_h, _CASING_DEPTH], FRAME_MATERIAL)
-        jamb.apply_transform(
-            trimesh.transformations.translation_matrix(
-                [x + sign * (width / 2.0 + _CASING_W / 2.0), sill + jamb_h / 2.0, z]
-            )
-        )
-        scene.add_geometry(jamb, geom_name=name + "_jamb")
+        _place_in_opening(scene, [_CASING_W, jamb_h, casing_depth], FRAME_MATERIAL,
+                          x=x, z=z, ly=sill + jamb_h / 2.0, rot=rot,
+                          lx=sign * (width / 2.0 + _CASING_W / 2.0), name=name + "_jamb")
     if sill > 0.05:
-        sill_bar = _box([outer_w, _CASING_W, _CASING_DEPTH + 0.04], FRAME_MATERIAL)
-        sill_bar.apply_transform(
-            trimesh.transformations.translation_matrix([x, sill - _CASING_W / 2.0, z])
-        )
-        scene.add_geometry(sill_bar, geom_name=name + "_sill")
+        _place_in_opening(scene, [outer_w, _CASING_W, casing_depth], FRAME_MATERIAL,
+                          x=x, z=z, ly=sill - _CASING_W / 2.0, rot=rot, name=name + "_sill")
 
 
 def _add_wall_coping(scene, sx, sy, ex, ey, thickness, height, name="coping"):
@@ -176,42 +211,41 @@ def _add_wall_coping(scene, sx, sy, ex, ey, thickness, height, name="coping"):
 
 
 def _add_opening(scene, opening, material, *, sill: float, default_height: float,
-                 s: float, wall_h: float):
+                 s: float, wall_h: float, scene_json: dict):
     """Place an opening (door/window) + the wall that frames it + a casing.
 
     The panel (glass/door) sits in the opening; a *lintel* fills the wall up to the
     ceiling (so windows aren't "empty above"); an *apron* fills below the sill for
     windows; and a simple frame (head + jambs + sill) makes it read as finished.
+    Everything is rotated to the host wall and kept WITHIN the wall thickness so the
+    opening reads flush with the wall, not sticking out.
     """
     pos = opening.get("position") or {}
-    x = float(pos.get("x", 0.0)) * s
-    z = float(pos.get("y", 0.0)) * s
+    px, py = float(pos.get("x", 0.0)), float(pos.get("y", 0.0))
+    x, z = px * s, py * s
     width = max(float(opening.get("width") or 0.9) * s, 0.45)
     height = max(float(opening.get("height") or default_height), 0.3)
     top = sill + height
 
-    panel = _box([width, height, _OPENING_DEPTH], material)
-    panel.apply_transform(
-        trimesh.transformations.translation_matrix([x, sill + height / 2.0, z])
-    )
-    scene.add_geometry(panel, geom_name=str(opening.get("id") or "opening"))
-    _add_opening_frame(scene, x, z, width, sill, height,
+    rot, thickness = _host_wall(scene_json, px, py)
+    # Depths live inside the wall thickness -> the opening sits flush, not proud.
+    panel_depth = min(_OPENING_DEPTH, max(thickness - 0.04, 0.04))
+    frame_depth = thickness  # lintel / apron fill the wall exactly
+
+    _place_in_opening(scene, [width, height, panel_depth], material,
+                      x=x, z=z, ly=sill + height / 2.0, rot=rot,
+                      name=str(opening.get("id") or "opening"))
+    _add_opening_frame(scene, x, z, width, sill, height, rot=rot, casing_depth=thickness,
                        name=str(opening.get("id") or "opening") + "_frame")
 
     frame_w = width + 0.12
     if wall_h - top > 0.05:  # lintel: wall above the opening up to the ceiling
         lh = wall_h - top
-        lintel = _box([frame_w, lh, _FRAME_DEPTH], WALL_MATERIAL)
-        lintel.apply_transform(
-            trimesh.transformations.translation_matrix([x, top + lh / 2.0, z])
-        )
-        scene.add_geometry(lintel, geom_name="lintel")
+        _place_in_opening(scene, [frame_w, lh, frame_depth], WALL_MATERIAL,
+                          x=x, z=z, ly=top + lh / 2.0, rot=rot, name="lintel")
     if sill > 0.05:  # apron: wall below the sill (windows)
-        apron = _box([frame_w, sill, _FRAME_DEPTH], WALL_MATERIAL)
-        apron.apply_transform(
-            trimesh.transformations.translation_matrix([x, sill / 2.0, z])
-        )
-        scene.add_geometry(apron, geom_name="apron")
+        _place_in_opening(scene, [frame_w, sill, frame_depth], WALL_MATERIAL,
+                          x=x, z=z, ly=sill / 2.0, rot=rot, name="apron")
 
 
 def build_glb_bytes(scene_json: dict) -> bytes:
@@ -251,12 +285,12 @@ def build_glb_bytes(scene_json: dict) -> bytes:
 
     for door in scene_json.get("doors") or []:
         _add_opening(scene, door, DOOR_MATERIAL, sill=0.0, default_height=2.1,
-                     s=s, wall_h=wall_h)
+                     s=s, wall_h=wall_h, scene_json=scene_json)
     for window in scene_json.get("windows") or []:
         _add_opening(
             scene, window, WINDOW_MATERIAL,
             sill=float(window.get("sill_height") or 0.9), default_height=1.1,
-            s=s, wall_h=wall_h,
+            s=s, wall_h=wall_h, scene_json=scene_json,
         )
 
     # Guarantee non-empty geometry so the export is always a valid glb.
