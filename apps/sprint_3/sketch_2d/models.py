@@ -24,9 +24,10 @@ class Boceto2D(BaseModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bocetos"
     )
     prompt = models.TextField()
-    # Archivo real (storage local o S3, S3-ready). `imagen_url` guarda la URL absoluta.
+    # Archivo real (storage local o S3). La URL absoluta NO se persiste: el
+    # serializer la calcula al leer (en S3 es prefirmada y caduca en ~1h, así que
+    # debe regenerarse en cada respuesta).
     imagen = models.ImageField(upload_to="sketch2d/", null=True, blank=True)
-    imagen_url = models.CharField(max_length=255, blank=True)
     proveedor_ia = models.CharField(max_length=20, default="mock")  # mock | gemini
     estado = models.CharField(
         max_length=15, choices=SketchStatus.choices, default=SketchStatus.GENERADO

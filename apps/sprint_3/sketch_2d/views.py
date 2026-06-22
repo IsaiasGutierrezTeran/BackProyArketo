@@ -32,7 +32,6 @@ class GenerateSketchView(APIView):
             prompt=data.validated_data["prompt"],
             project_id=data.validated_data.get("project"),
             provider_name=data.validated_data.get("provider"),
-            request=request,
         )
         return Response(
             Boceto2DSerializer(boceto, context={"request": request}).data,

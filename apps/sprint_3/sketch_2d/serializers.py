@@ -4,10 +4,15 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
+from core.utils import absolute_media_url
+
 from .models import Boceto2D
 
 
 class Boceto2DSerializer(serializers.ModelSerializer):
+    # URL absoluta calculada al leer (en S3, prefirmada y fresca en cada respuesta).
+    imagen_url = serializers.SerializerMethodField()
+
     class Meta:
         model = Boceto2D
         fields = [
@@ -15,6 +20,9 @@ class Boceto2DSerializer(serializers.ModelSerializer):
             "proveedor_ia", "estado", "created_at",
         ]
         read_only_fields = fields
+
+    def get_imagen_url(self, obj) -> str | None:
+        return absolute_media_url(obj.imagen, self.context.get("request"))
 
 
 class GenerateSketchSerializer(serializers.Serializer):

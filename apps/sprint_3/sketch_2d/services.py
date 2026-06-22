@@ -7,7 +7,6 @@ from django.core.files.base import ContentFile
 from django.db.models import QuerySet
 
 from core.exceptions import ApiException
-from core.utils import absolute_media_url
 from projects.services import projects_for
 
 from .models import Boceto2D, SketchStatus
@@ -44,8 +43,12 @@ def _resolve_project(user, project_id: int | None):
 
 
 def generate_sketch(*, user, prompt: str, project_id: int | None = None,
-                    provider_name: str | None = None, request=None) -> Boceto2D:
-    """Genera un boceto 2D, lo guarda y devuelve el `Boceto2D` (imagen_url absoluta)."""
+                    provider_name: str | None = None) -> Boceto2D:
+    """Genera un boceto 2D, lo guarda y devuelve el `Boceto2D`.
+
+    La URL absoluta de la imagen la calcula el serializer al leer (en S3 es
+    prefirmada y se regenera en cada respuesta), por eso aquí no se persiste.
+    """
     project = _resolve_project(user, project_id)
     provider = get_provider(provider_name)
     boceto = Boceto2D(usuario=user, proyecto=project, prompt=prompt, proveedor_ia=provider.name)
@@ -60,7 +63,4 @@ def generate_sketch(*, user, prompt: str, project_id: int | None = None,
     boceto.imagen.save(f"sketch_{user.id}.png", ContentFile(png), save=False)
     boceto.estado = SketchStatus.GENERADO
     boceto.save()
-    # URL ABSOLUTA (local vía request, o ya absoluta en S3) — para que el móvil la cargue.
-    boceto.imagen_url = absolute_media_url(boceto.imagen, request) or ""
-    boceto.save(update_fields=["imagen_url"])
     return boceto
