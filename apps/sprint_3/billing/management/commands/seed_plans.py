@@ -15,8 +15,8 @@ from billing.models import BillingInterval, SubscriptionPlan
 # (enforzado en core.entitlements).
 PLANS = [
     ("free", "Free", "0.00", ["1 proyecto", "Detección mock"]),
-    ("pro", "Pro", "19.00", ["Proyectos ilimitados", "Mask R-CNN / IA visión", "Riesgos IA"]),
-    ("enterprise", "Enterprise", "99.00", ["Todo Pro", "Colaboración", "Soporte prioritario"]),
+    ("pro", "Pro", "19.00", ["Proyectos ilimitados", "Mask R-CNN / IA visión", "Riesgos IA", "Colaboración"]),
+    ("enterprise", "Enterprise", "99.00", ["Todo Pro", "Soporte prioritario"]),
 ]
 
 

@@ -91,7 +91,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def members(self, request, pk=None):
         project = self.get_object()
         if request.method == "POST":
-            requires_plan(request.user, "enterprise", "La colaboración")
+            requires_plan(request.user, "pro", "La colaboración")
             data = InviteMemberSerializer(data=request.data)
             data.is_valid(raise_exception=True)
             membership = services.invite_member(

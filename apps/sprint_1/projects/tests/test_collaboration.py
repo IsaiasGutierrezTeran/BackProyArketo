@@ -57,10 +57,23 @@ def test_invitee_can_decline(make_user, auth_client):
     assert auth_client(invitee).get("/api/invitations/").json()["data"] == []
 
 
-def test_non_enterprise_cannot_invite(make_user, auth_client):
-    """Invitar colaboradores es exclusivo del plan Enterprise -> 403 para Free/Pro."""
+def test_pro_can_invite(make_user, auth_client):
+    """La colaboración está disponible desde el plan Pro."""
     owner = make_user(email="prouser@x.dev", subscription_plan="pro")
     other = make_user(email="x3@x.dev")
+    project = Project.objects.create(owner=owner, name="P")
+    resp = auth_client(owner).post(
+        f"/api/projects/{project.id}/members/",
+        {"user": other.id, "role": "editor"}, format="json",
+    )
+    assert resp.status_code == 201
+    assert resp.json()["data"]["status"] == "pending"
+
+
+def test_free_cannot_invite(make_user, auth_client):
+    """El plan Free no incluye colaboración -> 403."""
+    owner = make_user(email="freeowner@x.dev", subscription_plan="free")
+    other = make_user(email="x4@x.dev")
     project = Project.objects.create(owner=owner, name="P")
     resp = auth_client(owner).post(
         f"/api/projects/{project.id}/members/",
