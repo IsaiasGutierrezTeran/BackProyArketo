@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.permissions import IsArquitecto
+
 from . import services
 from .models import DesignRequest
 from .serializers import (
@@ -27,7 +29,7 @@ def _created(request_obj, http_request):
 
 @extend_schema(tags=["ai-design"])
 class GenerateFromTextView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsArquitecto]
 
     @extend_schema(request=TextDesignSerializer, responses={201: DesignRequestSerializer},
                    summary="Generar un plano/modelo 3D desde texto")
@@ -45,7 +47,7 @@ class GenerateFromTextView(APIView):
 
 @extend_schema(tags=["ai-design"])
 class GenerateFromAudioView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsArquitecto]
 
     @extend_schema(request=AudioDesignSerializer, responses={201: DesignRequestSerializer},
                    summary="Generar un plano desde audio (se transcribe y se reutiliza)")
@@ -63,7 +65,7 @@ class GenerateFromAudioView(APIView):
 
 @extend_schema(tags=["ai-design"])
 class AssistantView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsArquitecto]
 
     @extend_schema(request=AssistantSerializer, responses={201: DesignRequestSerializer},
                    summary="Asistente de diseño conversacional")

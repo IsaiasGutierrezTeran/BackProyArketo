@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.exceptions import ApiException
+from core.permissions import IsArquitecto
 from plans.services import plans_for
 from projects.services import assert_can_edit_project
 
@@ -19,9 +20,9 @@ from .serializers import DetectionJobSerializer, RunDetectionSerializer
 
 @extend_schema(tags=["detection"])
 class RunDetectionView(APIView):
-    """Generate a 3D model from an uploaded plan (CU5)."""
+    """Generate a 3D model from an uploaded plan (CU5). Arquitecto-only."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsArquitecto]
 
     @extend_schema(
         request=RunDetectionSerializer,

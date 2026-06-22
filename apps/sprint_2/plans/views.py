@@ -8,8 +8,13 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.permissions import IsArquitecto
+
 from . import services
 from .serializers import PlanSerializer, PlanUploadSerializer
+
+# Subir/eliminar planos es diseño: exclusivo del arquitecto. Ver/listar: cualquier miembro.
+_DESIGN_ACTIONS = {"create", "destroy"}
 
 
 @extend_schema(tags=["plans"])
@@ -20,10 +25,12 @@ class PlanViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    """Upload and manage 2D plans (no in-place update; re-upload instead)."""
+    """Upload/delete plans (arquitecto); list/view (any project member)."""
 
-    permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
+
+    def get_permissions(self):
+        return [IsArquitecto()] if self.action in _DESIGN_ACTIONS else [IsAuthenticated()]
 
     def get_queryset(self):
         user = getattr(self.request, "user", None)

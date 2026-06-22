@@ -32,6 +32,12 @@ def role_required(*roles: str) -> type[BasePermission]:
     return _RolePermission
 
 
+# Diseñar/modelar (subir plano, detección, editar/importar 3D, diseño IA, boceto)
+# es exclusivo del Arquitecto (y superadmin). El cliente delega el diseño.
+IsArquitecto = role_required("arquitecto")
+IsArquitecto.message = "Solo un Arquitecto puede diseñar o modelar. Invita a un arquitecto al proyecto."
+
+
 class IsOwnerOrReadOnly(BasePermission):
     """Write only for the object's owner (or superadmin); read for any authed user."""
 

@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.permissions import IsArquitecto
+
 from . import services
 from .models import Boceto2D
 from .serializers import Boceto2DSerializer, GenerateSketchSerializer
@@ -15,9 +17,9 @@ from .serializers import Boceto2DSerializer, GenerateSketchSerializer
 
 @extend_schema(tags=["sketch2d"])
 class GenerateSketchView(APIView):
-    """POST /api/sketch2d/generate — genera un boceto 2D desde un prompt."""
+    """POST /api/sketch2d/generate — genera un boceto 2D desde un prompt. Arquitecto-only."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsArquitecto]
 
     @extend_schema(
         request=GenerateSketchSerializer,

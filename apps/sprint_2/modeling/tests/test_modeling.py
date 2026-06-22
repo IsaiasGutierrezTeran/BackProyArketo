@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from accounts.models import Role
 from modeling.models import Model3D
 from modeling.services import create_model_from_scene
 from projects.models import Project
@@ -38,7 +39,7 @@ def test_retrieve_model_has_glb_url(make_user, auth_client):
 
 
 def test_edit_scene_regenerates_glb(make_user, auth_client):
-    user = make_user()
+    user = make_user(role=Role.ARQUITECTO)
     model = _model(user)
     client = auth_client(user)
     new_scene = {**SCENE, "walls": SCENE["walls"] + [
@@ -96,7 +97,7 @@ def test_plan_png_scoped_to_user_projects(make_user, auth_client):
 
 
 def test_import_glb(make_user, auth_client):
-    user = make_user()
+    user = make_user(role=Role.ARQUITECTO)
     project = Project.objects.create(owner=user, name="P")
     client = auth_client(user)
     glb = SimpleUploadedFile("m.glb", b"glTF\x02\x00\x00\x00rest", content_type="model/gltf-binary")

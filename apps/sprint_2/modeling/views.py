@@ -10,12 +10,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from core.exceptions import ApiException
+from core.permissions import IsArquitecto
 from core.utils import absolute_media_url
 from projects.services import assert_can_edit_project, projects_for
 
 from . import plan2d, services
 from .models import Model3D
 from .serializers import ImportGlbSerializer, Model3DSerializer, SceneEditSerializer
+
+# Acciones que MODIFICAN el modelo/diseño: exclusivas del arquitecto.
+_DESIGN_ACTIONS = {"scene", "import_model", "destroy"}
 
 
 @extend_schema(tags=["modeling"])
@@ -25,10 +29,12 @@ class Model3DViewSet(
     mixins.DestroyModelMixin,
     viewsets.GenericViewSet,
 ):
-    """View, edit, import and export 3D models scoped to the user's projects."""
+    """View (any member), edit/import/delete (arquitecto) 3D models in the user's projects."""
 
     serializer_class = Model3DSerializer
-    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        return [IsArquitecto()] if self.action in _DESIGN_ACTIONS else [IsAuthenticated()]
 
     def get_queryset(self):
         user = getattr(self.request, "user", None)

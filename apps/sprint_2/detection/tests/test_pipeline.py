@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+from accounts.models import Role
 from modeling.models import Model3D
 from plans.models import Plan, PlanStatus
 from projects.models import Project
@@ -24,7 +25,7 @@ def _make_plan(user):
 
 
 def test_run_pipeline_mock_creates_model(make_user, auth_client):
-    user = make_user()
+    user = make_user(role=Role.ARQUITECTO)
     plan = _make_plan(user)
     client = auth_client(user)
 
@@ -43,8 +44,8 @@ def test_run_pipeline_mock_creates_model(make_user, auth_client):
 
 
 def test_cannot_detect_others_plan(make_user, auth_client):
-    user = make_user(email="a@x.dev")
-    other = make_user(email="b@x.dev")
+    user = make_user(email="a@x.dev", role=Role.ARQUITECTO)
+    other = make_user(email="b@x.dev", role=Role.ARQUITECTO)
     plan = _make_plan(other)
     client = auth_client(user)
     resp = client.post("/api/detection/run", {"plan": plan.id}, format="json")
