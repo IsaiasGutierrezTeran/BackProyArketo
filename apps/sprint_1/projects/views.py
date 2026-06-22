@@ -16,11 +16,13 @@ from core.exceptions import ApiException
 from core.permissions import IsOwnerOrReadOnly
 
 from . import services
-from .models import Comment
+from .models import Comment, ProjectMembership
 from .serializers import (
-    AddMemberSerializer,
+    AssignableUserSerializer,
     CommentSerializer,
     DashboardSerializer,
+    InvitationSerializer,
+    InviteMemberSerializer,
     ProjectMembershipSerializer,
     ProjectSerializer,
     SyncSerializer,
@@ -76,22 +78,30 @@ class ProjectViewSet(viewsets.ModelViewSet):
         data = services.sync_changes(request.user, since)
         return Response(SyncSerializer(data, context={"request": request}).data)
 
-    @extend_schema(summary="Listar/invitar colaboradores (CU14)")
+    @extend_schema(summary="Listar colaboradores / invitar (elige usuario por id) (CU14)")
     @action(detail=True, methods=["get", "post"])
     def members(self, request, pk=None):
         project = self.get_object()
         if request.method == "POST":
-            data = AddMemberSerializer(data=request.data)
+            data = InviteMemberSerializer(data=request.data)
             data.is_valid(raise_exception=True)
-            membership = services.add_member(
+            membership = services.invite_member(
                 owner=request.user, project_id=project.id,
-                email=data.validated_data["email"], role=data.validated_data["role"],
+                user_id=data.validated_data["user"], role=data.validated_data["role"],
             )
             return Response(
                 ProjectMembershipSerializer(membership).data, status=status.HTTP_201_CREATED
             )
         memberships = project.memberships.select_related("user")
         return Response(ProjectMembershipSerializer(memberships, many=True).data)
+
+    @extend_schema(responses={200: AssignableUserSerializer(many=True)},
+                   summary="Usuarios que se pueden invitar a este proyecto (para el selector)")
+    @action(detail=True, methods=["get"])
+    def assignable(self, request, pk=None):
+        self.get_object()  # 404/permiso si no es accesible
+        users = services.assignable_users(user=request.user, project_id=pk)
+        return Response(AssignableUserSerializer(users, many=True).data)
 
     @extend_schema(summary="Quitar un colaborador (CU14)")
     @action(detail=True, methods=["delete"], url_path="members/(?P<membership_id>[^/.]+)")
@@ -137,3 +147,31 @@ class CommentViewSet(
                 or getattr(self.request.user, "is_superadmin", False)):
             raise ApiException("No puedes borrar este comentario.", code="forbidden", status_code=403)
         instance.delete()
+
+
+@extend_schema(tags=["projects"])
+class InvitationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    """The invited user's inbox: list pending invitations, accept or decline (CU14)."""
+
+    serializer_class = InvitationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = getattr(self.request, "user", None)
+        if user is None or not user.is_authenticated:
+            return ProjectMembership.objects.none()
+        return services.pending_invitations_for(user)
+
+    @extend_schema(request=None, responses={200: InvitationSerializer},
+                   summary="Aceptar una invitación a colaborar")
+    @action(detail=True, methods=["post"])
+    def accept(self, request, pk=None):
+        membership = services.accept_invitation(user=request.user, membership_id=pk)
+        return Response(InvitationSerializer(membership, context={"request": request}).data)
+
+    @extend_schema(request=None, responses={204: None},
+                   summary="Rechazar una invitación a colaborar")
+    @action(detail=True, methods=["post"])
+    def decline(self, request, pk=None):
+        services.decline_invitation(user=request.user, membership_id=pk)
+        return Response(status=status.HTTP_204_NO_CONTENT)

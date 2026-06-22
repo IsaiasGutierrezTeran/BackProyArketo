@@ -10,25 +10,41 @@ from django.utils import timezone
 
 from core.exceptions import ApiException
 
-from .models import Comment, MembershipRole, Project, ProjectMembership, ProjectStatus
+from .models import (
+    Comment,
+    MembershipRole,
+    MembershipStatus,
+    Project,
+    ProjectMembership,
+    ProjectStatus,
+)
 
 User = get_user_model()
 
 
 def projects_for(user) -> QuerySet[Project]:
-    """Projects visible to a user: owned + shared via membership. Superadmin: all."""
+    """Projects visible to a user: owned + shared via an ACCEPTED membership.
+
+    A pending invitation does NOT grant access — the invitee only sees the
+    project once they accept it. Superadmin sees all.
+    """
     qs = Project.objects.all()
     if getattr(user, "is_superadmin", False):
         return qs
-    return qs.filter(Q(owner=user) | Q(memberships__user=user)).distinct()
+    return qs.filter(
+        Q(owner=user)
+        | Q(memberships__user=user, memberships__status=MembershipStatus.ACCEPTED)
+    ).distinct()
 
 
 def can_edit_project(user, project: Project) -> bool:
-    """Owner, project editor, or superadmin may modify a project / its 3D model."""
+    """Owner, accepted project editor, or superadmin may modify a project / its 3D model."""
     if getattr(user, "is_superadmin", False) or project.owner_id == user.id:
         return True
     return project.memberships.filter(
-        user=user, role__in=[MembershipRole.OWNER, MembershipRole.EDITOR]
+        user=user,
+        role__in=[MembershipRole.OWNER, MembershipRole.EDITOR],
+        status=MembershipStatus.ACCEPTED,
     ).exists()
 
 
@@ -67,7 +83,7 @@ def _owner_project(user, project_id: int) -> Project:
 
 
 def add_member(*, owner, project_id: int, email: str, role: str) -> ProjectMembership:
-    """Invite a user (by email) to collaborate on a project (CU14)."""
+    """Add an ACCEPTED collaborator directly (used by seeds/back-office, no invite step)."""
     project = _owner_project(owner, project_id)
     member = User.objects.filter(email=email).first()
     if member is None:
@@ -75,9 +91,80 @@ def add_member(*, owner, project_id: int, email: str, role: str) -> ProjectMembe
     if member.id == project.owner_id:
         raise ApiException("El propietario ya tiene acceso total.", code="bad_request")
     membership, _ = ProjectMembership.objects.update_or_create(
-        project=project, user=member, defaults={"role": role}
+        project=project, user=member,
+        defaults={"role": role, "status": MembershipStatus.ACCEPTED, "invited_by": owner},
     )
     return membership
+
+
+def invite_member(*, owner, project_id: int, user_id: int, role: str) -> ProjectMembership:
+    """Invite a user (chosen from the assignable list) to collaborate (CU14).
+
+    Creates a PENDING invitation; the invitee must accept it before gaining
+    access. Re-inviting a still-pending user just updates the offered role.
+    """
+    project = _owner_project(owner, project_id)
+    member = User.objects.filter(pk=user_id, is_active=True).first()
+    if member is None:
+        raise ApiException("Usuario no encontrado.", code="not_found", status_code=404)
+    if member.id == project.owner_id:
+        raise ApiException("El propietario ya tiene acceso total.", code="bad_request")
+
+    existing = ProjectMembership.objects.filter(project=project, user=member).first()
+    if existing and existing.status == MembershipStatus.ACCEPTED:
+        raise ApiException("Ese usuario ya colabora en el proyecto.", code="bad_request")
+
+    membership, _ = ProjectMembership.objects.update_or_create(
+        project=project, user=member,
+        defaults={"role": role, "status": MembershipStatus.PENDING, "invited_by": owner},
+    )
+    return membership
+
+
+def assignable_users(*, user, project_id: int) -> QuerySet:
+    """Active users the owner can still invite to this project.
+
+    Excludes the owner and anyone already invited/collaborating (any status).
+    """
+    project = _owner_project(user, project_id)
+    taken = ProjectMembership.objects.filter(project=project).values_list("user_id", flat=True)
+    return (
+        User.objects.filter(is_active=True)
+        .exclude(pk=project.owner_id)
+        .exclude(pk__in=list(taken))
+        .exclude(is_superuser=True)
+        .order_by("full_name", "email")
+    )
+
+
+def pending_invitations_for(user) -> QuerySet[ProjectMembership]:
+    """Invitations awaiting the user's decision (their inbox)."""
+    return (
+        ProjectMembership.objects.filter(user=user, status=MembershipStatus.PENDING)
+        .select_related("project", "project__owner", "invited_by")
+        .order_by("-created_at")
+    )
+
+
+def accept_invitation(*, user, membership_id: int) -> ProjectMembership:
+    """The invitee accepts a pending invitation -> becomes an active collaborator."""
+    membership = ProjectMembership.objects.filter(
+        pk=membership_id, user=user, status=MembershipStatus.PENDING
+    ).first()
+    if membership is None:
+        raise ApiException("Invitación no encontrada.", code="not_found", status_code=404)
+    membership.status = MembershipStatus.ACCEPTED
+    membership.save(update_fields=["status", "updated_at"])
+    return membership
+
+
+def decline_invitation(*, user, membership_id: int) -> None:
+    """The invitee rejects a pending invitation (removes it)."""
+    deleted, _ = ProjectMembership.objects.filter(
+        pk=membership_id, user=user, status=MembershipStatus.PENDING
+    ).delete()
+    if not deleted:
+        raise ApiException("Invitación no encontrada.", code="not_found", status_code=404)
 
 
 def remove_member(*, owner, project_id: int, membership_id: int) -> None:

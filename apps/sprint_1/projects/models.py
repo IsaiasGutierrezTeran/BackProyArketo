@@ -46,8 +46,19 @@ class MembershipRole(models.TextChoices):
     VIEWER = "viewer", "Lector"
 
 
+class MembershipStatus(models.TextChoices):
+    """Invitation state of a collaboration (CU14).
+
+    An invite stays PENDING until the invited user accepts it; only ACCEPTED
+    memberships grant access to the project.
+    """
+
+    PENDING = "pending", "Pendiente"
+    ACCEPTED = "accepted", "Aceptada"
+
+
 class ProjectMembership(BaseModel):
-    """A user's access to a shared project."""
+    """A user's access (or pending invitation) to a shared project."""
 
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name="memberships"
@@ -58,6 +69,13 @@ class ProjectMembership(BaseModel):
     role = models.CharField(
         max_length=12, choices=MembershipRole.choices, default=MembershipRole.VIEWER
     )
+    status = models.CharField(
+        max_length=10, choices=MembershipStatus.choices, default=MembershipStatus.ACCEPTED
+    )
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="sent_invitations",
+    )
 
     class Meta(BaseModel.Meta):
         constraints = [
@@ -65,7 +83,7 @@ class ProjectMembership(BaseModel):
         ]
 
     def __str__(self) -> str:
-        return f"{self.user_id}@{self.project_id} ({self.role})"
+        return f"{self.user_id}@{self.project_id} ({self.role}, {self.status})"
 
 
 class Comment(BaseModel):
