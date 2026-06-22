@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.entitlements import allowed_detectors
 from core.exceptions import ApiException
 from core.permissions import IsArquitecto
 from plans.services import plans_for
@@ -38,6 +39,14 @@ class RunDetectionView(APIView):
         if plan is None:
             raise ApiException("Plano no encontrado.", code="not_found", status_code=404)
         assert_can_edit_project(request.user, plan.project)
+
+        # Plan de suscripción: Free solo puede usar el detector mock.
+        detector = payload.get("detector")
+        if detector and detector not in allowed_detectors(request.user):
+            raise ApiException(
+                "Ese detector requiere el plan Pro. Tu plan solo permite la detección mock.",
+                code="forbidden", status_code=403,
+            )
 
         options = {
             "pixels_per_meter": payload.get("pixels_per_meter"),

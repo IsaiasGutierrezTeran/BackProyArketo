@@ -20,7 +20,7 @@ SCENE = {
 
 
 def test_analyze_flags_long_wall(make_user, auth_client):
-    user = make_user()
+    user = make_user(subscription_plan="pro")  # Riesgos IA requiere Pro+
     project = Project.objects.create(owner=user, name="P")
     model = create_model_from_scene(project=project, scene_json=SCENE)
     client = auth_client(user)
@@ -32,9 +32,18 @@ def test_analyze_flags_long_wall(make_user, auth_client):
 
 
 def test_cannot_analyze_others_model(make_user, auth_client):
-    other = make_user(email="b@x.dev")
+    other = make_user(email="b@x.dev", subscription_plan="pro")
     project = Project.objects.create(owner=other, name="P")
     model = create_model_from_scene(project=project, scene_json=SCENE)
-    client = auth_client(make_user(email="a@x.dev"))
+    client = auth_client(make_user(email="a@x.dev", subscription_plan="pro"))
     resp = client.post("/api/risk/analyze", {"model3d": model.id}, format="json")
     assert resp.status_code == 404
+
+
+def test_free_plan_cannot_analyze_risk(make_user, auth_client):
+    """El plan Free no tiene Riesgos IA -> 403."""
+    user = make_user(subscription_plan="free")
+    project = Project.objects.create(owner=user, name="P")
+    model = create_model_from_scene(project=project, scene_json=SCENE)
+    resp = auth_client(user).post("/api/risk/analyze", {"model3d": model.id}, format="json")
+    assert resp.status_code == 403

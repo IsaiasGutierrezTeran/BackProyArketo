@@ -12,7 +12,7 @@ pytestmark = pytest.mark.django_db
 
 def test_invite_is_pending_until_accepted(make_user, auth_client):
     """Invite by user id -> PENDING; the invitee only sees the project after accepting."""
-    owner = make_user(email="o@x.dev")
+    owner = make_user(email="o@x.dev", subscription_plan="enterprise")  # invitar = Enterprise
     editor = make_user(email="e@x.dev")
     project = Project.objects.create(owner=owner, name="P")
 
@@ -41,7 +41,7 @@ def test_invite_is_pending_until_accepted(make_user, auth_client):
 
 
 def test_invitee_can_decline(make_user, auth_client):
-    owner = make_user(email="od@x.dev")
+    owner = make_user(email="od@x.dev", subscription_plan="enterprise")
     invitee = make_user(email="ed2@x.dev")
     project = Project.objects.create(owner=owner, name="P")
 
@@ -55,6 +55,18 @@ def test_invitee_can_decline(make_user, auth_client):
     declined = auth_client(invitee).post(f"/api/invitations/{membership_id}/decline/")
     assert declined.status_code == 204
     assert auth_client(invitee).get("/api/invitations/").json()["data"] == []
+
+
+def test_non_enterprise_cannot_invite(make_user, auth_client):
+    """Invitar colaboradores es exclusivo del plan Enterprise -> 403 para Free/Pro."""
+    owner = make_user(email="prouser@x.dev", subscription_plan="pro")
+    other = make_user(email="x3@x.dev")
+    project = Project.objects.create(owner=owner, name="P")
+    resp = auth_client(owner).post(
+        f"/api/projects/{project.id}/members/",
+        {"user": other.id, "role": "editor"}, format="json",
+    )
+    assert resp.status_code == 403
 
 
 def test_non_member_cannot_invite(make_user, auth_client):

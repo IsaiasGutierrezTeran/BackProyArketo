@@ -12,11 +12,12 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from core.entitlements import project_limit, requires_plan
 from core.exceptions import ApiException
 from core.permissions import IsOwnerOrReadOnly
 
 from . import services
-from .models import Comment, ProjectMembership
+from .models import Comment, Project, ProjectMembership
 from .serializers import (
     AssignableUserSerializer,
     CommentSerializer,
@@ -44,6 +45,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return services.projects_for(user)
 
     def perform_create(self, serializer):
+        # Límite de proyectos por plan (Free = 1). Superadmin/Pro/Enterprise: ilimitado.
+        limit = project_limit(self.request.user)
+        if limit is not None and Project.objects.filter(owner=self.request.user).count() >= limit:
+            raise ApiException(
+                f"Tu plan permite {limit} proyecto(s). Mejora a Pro para crear más.",
+                code="forbidden", status_code=403,
+            )
         serializer.instance = services.create_project(
             owner=self.request.user, **serializer.validated_data
         )
@@ -83,6 +91,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def members(self, request, pk=None):
         project = self.get_object()
         if request.method == "POST":
+            requires_plan(request.user, "enterprise", "La colaboración")
             data = InviteMemberSerializer(data=request.data)
             data.is_valid(raise_exception=True)
             membership = services.invite_member(

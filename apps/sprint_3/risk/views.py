@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.entitlements import requires_plan
 from core.reports import risk_report_pdf
 from projects.services import projects_for
 
@@ -25,6 +26,7 @@ class AnalyzeRiskView(APIView):
     @extend_schema(request=AnalyzeSerializer, responses={201: RiskAnalysisSerializer},
                    summary="Analizar riesgos estructurales de un modelo 3D")
     def post(self, request):
+        requires_plan(request.user, "pro", "El análisis de riesgos con IA")
         data = AnalyzeSerializer(data=request.data)
         data.is_valid(raise_exception=True)
         model = services.model_for_user(request.user, data.validated_data["model3d"])
