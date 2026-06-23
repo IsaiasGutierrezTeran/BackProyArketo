@@ -46,3 +46,16 @@ class DesignRequest(BaseModel):
 
     def __str__(self) -> str:
         return f"DesignRequest #{self.pk} ({self.mode}, {self.status})"
+
+
+class AiConversation(BaseModel):
+    """Historial del chat de Diseño con IA por usuario (persistido en la BD)."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ai_conversation"
+    )
+    # Lista de turnos del chat: [{role, text, result?}], tal como los muestra el front.
+    turns = models.JSONField(default=list, blank=True)
+
+    def __str__(self) -> str:
+        return f"AiConversation({self.user_id}, {len(self.turns or [])} turnos)"

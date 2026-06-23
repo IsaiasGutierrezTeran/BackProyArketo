@@ -11,10 +11,11 @@ from rest_framework.views import APIView
 from core.permissions import IsArquitecto
 
 from . import services
-from .models import DesignRequest
+from .models import AiConversation, DesignRequest
 from .serializers import (
     AssistantSerializer,
     AudioDesignSerializer,
+    ConversationSerializer,
     DesignRequestSerializer,
     TextDesignSerializer,
 )
@@ -80,6 +81,28 @@ class AssistantView(APIView):
             provider_name=data.validated_data.get("provider"),
         )
         return _created(result, request)
+
+
+@extend_schema(tags=["ai-design"])
+class ConversationView(APIView):
+    """Historial del chat de Diseño con IA del usuario (persistido en la BD)."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses={200: ConversationSerializer}, summary="Leer mi historial de chat IA")
+    def get(self, request):
+        conv = AiConversation.objects.filter(user=request.user).first()
+        return Response({"turns": conv.turns if conv else []})
+
+    @extend_schema(request=ConversationSerializer, responses={200: ConversationSerializer},
+                   summary="Guardar mi historial de chat IA")
+    def put(self, request):
+        data = ConversationSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        conv, _ = AiConversation.objects.update_or_create(
+            user=request.user, defaults={"turns": data.validated_data["turns"]}
+        )
+        return Response({"turns": conv.turns})
 
 
 @extend_schema(tags=["ai-design"])

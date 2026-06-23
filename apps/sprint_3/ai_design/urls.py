@@ -7,6 +7,7 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     AssistantView,
+    ConversationView,
     DesignRequestViewSet,
     GenerateFromAudioView,
     GenerateFromTextView,
@@ -19,5 +20,6 @@ urlpatterns = [
     path("ai-design/text", GenerateFromTextView.as_view(), name="ai-design-text"),
     path("ai-design/audio", GenerateFromAudioView.as_view(), name="ai-design-audio"),
     path("ai-design/assistant", AssistantView.as_view(), name="ai-design-assistant"),
+    path("ai-design/conversation", ConversationView.as_view(), name="ai-design-conversation"),
     *router.urls,
 ]
