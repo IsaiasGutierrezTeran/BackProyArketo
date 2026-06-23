@@ -60,7 +60,14 @@ def generate_from_text(*, user, prompt: str, project_id: int | None = None,
     try:
         # La llamada al proveedor (posible red/LLM) queda FUERA de la transacción
         # para no mantener abierta una conexión de BD durante la inferencia.
-        scene = provider.generate_scene(prompt)
+        try:
+            scene = provider.generate_scene(prompt)
+        except Exception:  # noqa: BLE001 — IA externa falló (429/cuota/red): usar el mock
+            if provider.name == "mock":
+                raise
+            scene = MockDesignProvider().generate_scene(prompt)
+            scene.setdefault("meta", {})["fallback_from"] = provider.name
+            request.provider = f"{provider.name}->mock"
         with transaction.atomic():
             model = (
                 create_model_from_scene(project=project, scene_json=scene)
@@ -123,7 +130,12 @@ def assistant_reply(*, user, message: str, request_id: int | None = None,
 
     messages = list((request.result or {}).get("messages", []))
     messages.append({"role": "user", "content": message})
-    reply = provider.chat(messages)
+    try:
+        reply = provider.chat(messages)
+    except Exception:  # noqa: BLE001 — IA externa caída (429/cuota): responde el asistente mock
+        if provider.name == "mock":
+            raise
+        reply = MockDesignProvider().chat(messages)
     messages.append({"role": "assistant", "content": reply})
 
     request.result = {"messages": messages}
