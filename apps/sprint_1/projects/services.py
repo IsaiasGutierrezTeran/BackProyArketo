@@ -58,6 +58,13 @@ def assert_can_edit_project(user, project: Project) -> Project:
     return project
 
 
+def mark_project_active(project: Project) -> None:
+    """Un proyecto pasa de Borrador a Activo cuando ya tiene trabajo (plano/modelo 3D)."""
+    if project.status == ProjectStatus.DRAFT:
+        project.status = ProjectStatus.ACTIVE
+        project.save(update_fields=["status", "updated_at"])
+
+
 def create_project(*, owner, name: str, description: str = "", status: str | None = None,
                    thumbnail=None) -> Project:
     return Project.objects.create(

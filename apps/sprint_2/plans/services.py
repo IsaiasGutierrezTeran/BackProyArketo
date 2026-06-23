@@ -6,7 +6,7 @@ from django.db.models import QuerySet
 
 from core.exceptions import ApiException
 from projects.models import Project
-from projects.services import assert_can_edit_project, projects_for
+from projects.services import assert_can_edit_project, mark_project_active, projects_for
 
 from .models import Plan
 from .validators import normalized_format
@@ -30,10 +30,12 @@ def _assert_can_use_project(user, project: Project) -> None:
 def create_plan(*, user, project: Project, file) -> Plan:
     """Validate edit rights and persist an uploaded plan."""
     _assert_can_use_project(user, project)
-    return Plan.objects.create(
+    plan = Plan.objects.create(
         project=project,
         uploaded_by=user,
         file=file,
         original_format=normalized_format(file.name),
         size_bytes=file.size,
     )
+    mark_project_active(project)
+    return plan

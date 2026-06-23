@@ -7,6 +7,8 @@ import io
 import trimesh
 from django.core.files.base import ContentFile
 
+from projects.services import mark_project_active
+
 from .glb import build_glb_bytes
 from .models import Model3D
 
@@ -99,6 +101,7 @@ def create_model_from_scene(*, project, scene_json: dict, source_plan=None) -> M
     model.glb_file.save(f"project_{project.id}.glb", ContentFile(glb), save=False)
     model.save()
     _set_only_current(project, model)
+    mark_project_active(project)
     return model
 
 
@@ -162,4 +165,5 @@ def import_glb(*, project, glb_file, source_plan=None) -> Model3D:
     model.glb_file.save(glb_file.name, ContentFile(raw), save=False)
     model.save()
     _set_only_current(project, model)
+    mark_project_active(project)
     return model
