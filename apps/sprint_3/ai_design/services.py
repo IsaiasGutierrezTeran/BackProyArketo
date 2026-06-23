@@ -130,15 +130,17 @@ def assistant_reply(*, user, message: str, request_id: int | None = None,
 
     messages = list((request.result or {}).get("messages", []))
     messages.append({"role": "user", "content": message})
+    used = provider.name
     try:
         reply = provider.chat(messages)
     except Exception:  # noqa: BLE001 — IA externa caída (429/cuota): responde el asistente mock
         if provider.name == "mock":
             raise
         reply = MockDesignProvider().chat(messages)
+        used = f"{provider.name}->mock"
     messages.append({"role": "assistant", "content": reply})
 
     request.result = {"messages": messages}
-    request.provider = provider.name
+    request.provider = used
     request.save(update_fields=["result", "provider", "updated_at"])
     return request
