@@ -262,7 +262,7 @@ BEDROCK_MODEL_ID = env("BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-202510
 TRANSCRIBE_LANGUAGE = env("TRANSCRIBE_LANGUAGE", "es-US")
 
 # --- Budget (Sprint 3) ------------------------------------------------------
-DEFAULT_CURRENCY = env("DEFAULT_CURRENCY", "USD")
+DEFAULT_CURRENCY = env("DEFAULT_CURRENCY", "Bs")  # bolivianos
 
 # --- Sketch 2D (Sprint 3, HU-18) — boceto 2D por prompt; mock por defecto ---
 SKETCH_PROVIDER = env("SKETCH_PROVIDER", "mock")  # mock | gemini

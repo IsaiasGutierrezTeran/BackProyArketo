@@ -85,3 +85,9 @@ class BudgetCreateSerializer(serializers.Serializer):
 class BudgetReviewInputSerializer(serializers.Serializer):
     decision = serializers.ChoiceField(choices=["approved", "observed", "rejected"])
     comments = serializers.CharField(required=False, allow_blank=True)
+
+
+class EstimateBudgetSerializer(serializers.Serializer):
+    """Estimar materiales desde un modelo 3D (cómputo métrico)."""
+
+    model3d = serializers.IntegerField(min_value=1)

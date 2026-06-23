@@ -18,6 +18,7 @@ from .serializers import (
     BudgetCreateSerializer,
     BudgetReviewInputSerializer,
     BudgetSerializer,
+    EstimateBudgetSerializer,
     MaterialCategorySerializer,
     MaterialSerializer,
 )
@@ -86,6 +87,20 @@ class BudgetViewSet(
             labor_people=data.validated_data["labor_people"],
             labor_cost=data.validated_data["labor_cost"],
             currency=data.validated_data.get("currency"),
+        )
+        return Response(
+            BudgetSerializer(budget, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @extend_schema(request=EstimateBudgetSerializer, responses={201: BudgetSerializer},
+                   summary="Estimar materiales desde el modelo 3D y crear un borrador")
+    @action(detail=False, methods=["post"])
+    def estimate(self, request):
+        data = EstimateBudgetSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        budget = services.estimate_budget(
+            user=request.user, model3d_id=data.validated_data["model3d"]
         )
         return Response(
             BudgetSerializer(budget, context={"request": request}).data,
