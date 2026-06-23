@@ -36,10 +36,17 @@ Exterior walls are 0.20 m thick; interior walls 0.12 m.
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from django.conf import settings
 
 from .base import DesignProviderBase
+
+
+def _norm(s: str) -> str:
+    """minúsculas sin acentos ni ñ, para que el parseo entienda 'baños', 'salón'…"""
+    s = unicodedata.normalize("NFKD", (s or "").lower())
+    return "".join(c for c in s if not unicodedata.combining(c)).replace("ñ", "n")
 
 # --------------------------------------------------------------------------- #
 # Brief parsing (free Spanish text)
@@ -111,27 +118,30 @@ def _garage_cars(prompt: str) -> int:
 
 
 def _program(prompt: str) -> dict:
-    """The full requested program parsed from the brief."""
+    """Programa pedido, parseado del texto (normalizado sin acentos/ñ). Default 0:
+    solo se generan los ambientes que el usuario realmente pide."""
+    p = _norm(prompt)
     return {
-        "bedrooms": _count(prompt, r"dormitor|habitac|cuarto|recamar|rec[aá]mar|alcoba", 3),
-        "bathrooms": _count(prompt, r"ba[nñ]o|servicio higi[eé]nico|sshh|aseo", 2),
-        "sala": _has(prompt, r"\bsala\b|living|estar|salón|salon"),
-        "comedor": _has(prompt, r"comedor|comer"),
-        "cocina": _has(prompt, r"cocina|kitchen"),
-        "lavanderia": _has(prompt, r"lavander[ií]a|lavado|lavader"),
-        "garage_cars": _garage_cars(prompt),
+        "bedrooms": _count(p, r"dormitor|habitac|cuarto|recamar|alcoba", 0),
+        "bathrooms": _count(p, r"bano|servicio higi|sshh|aseo", 0),
+        "sala": _has(p, r"\bsala\b|living|estar|salon"),
+        "comedor": _has(p, r"comedor|comer"),
+        "cocina": _has(p, r"cocina|kitchen"),
+        "lavanderia": _has(p, r"lavanderi|lavado|lavader"),
+        "garage_cars": _garage_cars(p),
     }
 
 
 def _footprint(prompt: str) -> tuple[float, float]:
     """Best-effort house footprint (meters) from the brief; (W, L)."""
+    prompt = _norm(prompt)
     m = _SIZE_RE.search(prompt or "")
     if m:
-        return _clamp(_to_float(m.group(1)), 6, 20), _clamp(_to_float(m.group(2)), 6, 24)
+        return _clamp(_to_float(m.group(1)), 3, 30), _clamp(_to_float(m.group(2)), 3, 30)
     nums = [_to_float(x) for x in _M_RE.findall(prompt or "")]
-    nums = [n for n in nums if n >= 5]  # ignore "2 baños" style noise
+    nums = [n for n in nums if n >= 3]  # ignore "2 baños" style noise
     if len(nums) >= 2:
-        return _clamp(nums[0], 6, 20), _clamp(nums[1], 6, 24)
+        return _clamp(nums[0], 3, 30), _clamp(nums[1], 3, 30)
     a = _AREA_RE.search(prompt or "")
     if a:
         area = _clamp(float(a.group(1)), 50, 400)
