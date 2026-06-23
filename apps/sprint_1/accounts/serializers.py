@@ -35,10 +35,14 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(write_only=True, validators=[validate_user_password])
     phone = serializers.CharField(required=False, allow_blank=True, validators=[validate_phone])
+    # El usuario elige su rol al registrarse (superadmin nunca es opción).
+    role = serializers.ChoiceField(
+        choices=["cliente", "arquitecto", "ingeniero"], required=False, default="cliente"
+    )
 
     class Meta:
         model = User
-        fields = ["email", "full_name", "phone", "password"]
+        fields = ["email", "full_name", "phone", "password", "role"]
 
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):

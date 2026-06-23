@@ -13,14 +13,21 @@ from .models import Role
 User = get_user_model()
 
 
-def register_user(*, email: str, password: str, full_name: str = "", phone: str = "") -> "User":
-    """Self-registration. Role is forced to ``cliente`` to prevent escalation."""
+# Roles que un usuario puede elegir al auto-registrarse (nunca superadmin).
+_SELF_REGISTER_ROLES = {Role.CLIENTE, Role.ARQUITECTO, Role.INGENIERO}
+
+
+def register_user(*, email: str, password: str, full_name: str = "", phone: str = "",
+                  role: str = Role.CLIENTE) -> "User":
+    """Self-registration. El rol se limita a cliente/arquitecto/ingeniero (nunca superadmin)."""
+    if role not in _SELF_REGISTER_ROLES:
+        role = Role.CLIENTE
     return User.objects.create_user(
         email=email,
         password=password,
         full_name=full_name,
         phone=phone,
-        role=Role.CLIENTE,
+        role=role,
     )
 
 
