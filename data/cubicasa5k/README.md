@@ -51,6 +51,7 @@ por `Wall` / `Door` / `Window` y se escalan al espacio de píxeles de `F1_scaled
 |--------|----------|---------|
 | `prepare_cubicasa.py` | Lee el split y genera el **manifiesto** (`out/manifest_test.json`) con la imagen y el GT (wall/door/window) de cada plano. | Cualquier Python 3 con `Pillow`. |
 | `evaluate_cubicasa.py` | Carga los **pesos ya entrenados** (no reentrena), corre la detección sobre el test y calcula métricas por clase + dibuja ejemplos. | **Conda `imageTo3D`** (Py3.6 / TF1.15). |
+| `train_cubicasa.py` | **Reentrena (fine-tuning)** con el 80% (`train.txt`) para mejorar métricas. Parte de los pesos actuales y mantiene el mapeo de clases de producción. | **Conda `imageTo3D`** + **GPU** (en CPU solo `--smoke`). |
 | `svg_gt.py` | Utilidades compartidas (parser SVG→GT, splits, dibujo). | — |
 
 ### Cómo correr
@@ -121,8 +122,19 @@ misma pieza que genera el 3D.
 - Excluir del GT los arcos de barrido de las puertas (`Door Swing`) para no inflar su
   área.
 - Reportar también con tolerancia (IoU≥0.3) para estructuras finas.
-- **Reentrenar** con el 80 % (`train.txt`) más épocas — mejoraría las métricas. (Hay
-  un hueco para `train_cubicasa.py` cuando se pida.)
+- **Reentrenar** con el 80 % (`train.txt`) más épocas — es lo que más mejoraría las
+  métricas. Ya está `train_cubicasa.py`:
+
+  ```bash
+  python prepare_cubicasa.py --splits train.txt val.txt   # manifiestos completos
+  conda activate imageTo3D
+  python train_cubicasa.py --epochs 20 --layers heads             # primero las cabezas
+  python train_cubicasa.py --epochs 40 --layers all --lr 0.0005   # luego afinado total
+  python train_cubicasa.py --smoke   # prueba que corre (sin GPU)
+  ```
+
+  Necesita **GPU** (en CPU un entrenamiento real es inviable). Los pesos quedan en
+  `out/logs/...`; el `.h5` elegido se copia a `AIAPI/weights/` para producción.
 
 ---
 
