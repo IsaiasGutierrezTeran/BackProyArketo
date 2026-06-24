@@ -33,7 +33,10 @@ def projects_for(user) -> QuerySet[Project]:
         return qs
     return qs.filter(
         Q(owner=user)
-        | Q(memberships__user=user, memberships__status=MembershipStatus.ACCEPTED)
+        | Q(
+            memberships__user=user,
+            memberships__status=MembershipStatus.ACCEPTED,
+        )
     ).distinct()
 
 
@@ -53,7 +56,8 @@ def assert_can_edit_project(user, project: Project) -> Project:
     if not can_edit_project(user, project):
         raise ApiException(
             "Solo lectura: no tienes permiso de edición en este proyecto.",
-            code="forbidden", status_code=403,
+            code="forbidden",
+            status_code=403,
         )
     return project
 
@@ -65,8 +69,14 @@ def mark_project_active(project: Project) -> None:
         project.save(update_fields=["status", "updated_at"])
 
 
-def create_project(*, owner, name: str, description: str = "", status: str | None = None,
-                   thumbnail=None) -> Project:
+def create_project(
+    *,
+    owner,
+    name: str,
+    description: str = "",
+    status: str | None = None,
+    thumbnail=None,
+) -> Project:
     return Project.objects.create(
         owner=owner,
         name=name,
@@ -80,31 +90,49 @@ def _owner_project(user, project_id: int) -> Project:
     """Return the project iff the user owns it (or is superadmin), else 404/403."""
     project = projects_for(user).filter(pk=project_id).first()
     if project is None:
-        raise ApiException("Proyecto no encontrado.", code="not_found", status_code=404)
-    if not (getattr(user, "is_superadmin", False) or project.owner_id == user.id):
+        raise ApiException(
+            "Proyecto no encontrado.", code="not_found", status_code=404
+        )
+    if not (
+        getattr(user, "is_superadmin", False) or project.owner_id == user.id
+    ):
         raise ApiException(
             "Solo el propietario puede gestionar colaboradores.",
-            code="forbidden", status_code=403,
+            code="forbidden",
+            status_code=403,
         )
     return project
 
 
-def add_member(*, owner, project_id: int, email: str, role: str) -> ProjectMembership:
+def add_member(
+    *, owner, project_id: int, email: str, role: str
+) -> ProjectMembership:
     """Add an ACCEPTED collaborator directly (used by seeds/back-office, no invite step)."""
     project = _owner_project(owner, project_id)
     member = User.objects.filter(email=email).first()
     if member is None:
-        raise ApiException("Usuario no encontrado.", code="not_found", status_code=404)
+        raise ApiException(
+            "Usuario no encontrado.", code="not_found", status_code=404
+        )
     if member.id == project.owner_id:
-        raise ApiException("El propietario ya tiene acceso total.", code="bad_request")
+        raise ApiException(
+            "El propietario ya tiene acceso total.", code="bad_request"
+        )
     membership, _ = ProjectMembership.objects.update_or_create(
-        project=project, user=member,
-        defaults={"role": role, "status": MembershipStatus.ACCEPTED, "invited_by": owner},
+        project=project,
+        user=member,
+        defaults={
+            "role": role,
+            "status": MembershipStatus.ACCEPTED,
+            "invited_by": owner,
+        },
     )
     return membership
 
 
-def invite_member(*, owner, project_id: int, user_id: int, role: str) -> ProjectMembership:
+def invite_member(
+    *, owner, project_id: int, user_id: int, role: str
+) -> ProjectMembership:
     """Invite a user (chosen from the assignable list) to collaborate (CU14).
 
     Creates a PENDING invitation; the invitee must accept it before gaining
@@ -113,17 +141,30 @@ def invite_member(*, owner, project_id: int, user_id: int, role: str) -> Project
     project = _owner_project(owner, project_id)
     member = User.objects.filter(pk=user_id, is_active=True).first()
     if member is None:
-        raise ApiException("Usuario no encontrado.", code="not_found", status_code=404)
+        raise ApiException(
+            "Usuario no encontrado.", code="not_found", status_code=404
+        )
     if member.id == project.owner_id:
-        raise ApiException("El propietario ya tiene acceso total.", code="bad_request")
+        raise ApiException(
+            "El propietario ya tiene acceso total.", code="bad_request"
+        )
 
-    existing = ProjectMembership.objects.filter(project=project, user=member).first()
+    existing = ProjectMembership.objects.filter(
+        project=project, user=member
+    ).first()
     if existing and existing.status == MembershipStatus.ACCEPTED:
-        raise ApiException("Ese usuario ya colabora en el proyecto.", code="bad_request")
+        raise ApiException(
+            "Ese usuario ya colabora en el proyecto.", code="bad_request"
+        )
 
     membership, _ = ProjectMembership.objects.update_or_create(
-        project=project, user=member,
-        defaults={"role": role, "status": MembershipStatus.PENDING, "invited_by": owner},
+        project=project,
+        user=member,
+        defaults={
+            "role": role,
+            "status": MembershipStatus.PENDING,
+            "invited_by": owner,
+        },
     )
     return membership
 
@@ -134,7 +175,9 @@ def assignable_users(*, user, project_id: int) -> QuerySet:
     Excludes the owner and anyone already invited/collaborating (any status).
     """
     project = _owner_project(user, project_id)
-    taken = ProjectMembership.objects.filter(project=project).values_list("user_id", flat=True)
+    taken = ProjectMembership.objects.filter(project=project).values_list(
+        "user_id", flat=True
+    )
     return (
         User.objects.filter(is_active=True)
         .exclude(pk=project.owner_id)
@@ -147,7 +190,9 @@ def assignable_users(*, user, project_id: int) -> QuerySet:
 def pending_invitations_for(user) -> QuerySet[ProjectMembership]:
     """Invitations awaiting the user's decision (their inbox)."""
     return (
-        ProjectMembership.objects.filter(user=user, status=MembershipStatus.PENDING)
+        ProjectMembership.objects.filter(
+            user=user, status=MembershipStatus.PENDING
+        )
         .select_related("project", "project__owner", "invited_by")
         .order_by("-created_at")
     )
@@ -159,7 +204,9 @@ def accept_invitation(*, user, membership_id: int) -> ProjectMembership:
         pk=membership_id, user=user, status=MembershipStatus.PENDING
     ).first()
     if membership is None:
-        raise ApiException("Invitación no encontrada.", code="not_found", status_code=404)
+        raise ApiException(
+            "Invitación no encontrada.", code="not_found", status_code=404
+        )
     membership.status = MembershipStatus.ACCEPTED
     membership.save(update_fields=["status", "updated_at"])
     return membership
@@ -171,27 +218,39 @@ def decline_invitation(*, user, membership_id: int) -> None:
         pk=membership_id, user=user, status=MembershipStatus.PENDING
     ).delete()
     if not deleted:
-        raise ApiException("Invitación no encontrada.", code="not_found", status_code=404)
+        raise ApiException(
+            "Invitación no encontrada.", code="not_found", status_code=404
+        )
 
 
 def remove_member(*, owner, project_id: int, membership_id: int) -> None:
     project = _owner_project(owner, project_id)
-    ProjectMembership.objects.filter(pk=membership_id, project=project).delete()
+    ProjectMembership.objects.filter(
+        pk=membership_id, project=project
+    ).delete()
 
 
-def add_comment(*, user, project: Project, body: str, parent: Comment | None = None) -> Comment:
-    return Comment.objects.create(project=project, author=user, body=body, parent=parent)
+def add_comment(
+    *, user, project: Project, body: str, parent: Comment | None = None
+) -> Comment:
+    return Comment.objects.create(
+        project=project, author=user, body=body, parent=parent
+    )
 
 
 def dashboard_summary(user) -> dict:
     """Aggregate counts + recent projects for the user's dashboard (CU16)."""
     qs = projects_for(user)
-    by_status = {row["status"]: row["n"] for row in qs.values("status").annotate(n=Count("id"))}
+    by_status = {
+        row["status"]: row["n"]
+        for row in qs.values("status").annotate(n=Count("id"))
+    }
     recent = list(qs.order_by("-updated_at")[:5])
     return {
         "total": qs.count(),
         "by_status": {
-            status.value: by_status.get(status.value, 0) for status in ProjectStatus
+            status.value: by_status.get(status.value, 0)
+            for status in ProjectStatus
         },
         "recent": recent,
     }
@@ -210,4 +269,8 @@ def sync_changes(user, since: datetime | None = None) -> dict:
     if since is not None:
         qs = qs.filter(updated_at__gt=since)
     changed = list(qs.order_by("updated_at"))
-    return {"server_time": server_time, "count": len(changed), "changed": changed}
+    return {
+        "server_time": server_time,
+        "count": len(changed),
+        "changed": changed,
+    }

@@ -10,7 +10,11 @@ pytestmark = pytest.mark.django_db
 def test_register_returns_enveloped_user(api_client):
     resp = api_client.post(
         "/api/auth/register",
-        {"email": "new@test.dev", "password": "Str0ngPass123", "full_name": "New User"},
+        {
+            "email": "new@test.dev",
+            "password": "Str0ngPass123",
+            "full_name": "New User",
+        },
         format="json",
     )
     assert resp.status_code == 201
@@ -46,7 +50,9 @@ def test_login_bad_credentials_uses_error_envelope(api_client, make_user):
     assert body["error"]["code"] == "unauthorized"
 
 
-def test_me_requires_auth_and_returns_profile(api_client, make_user, auth_client):
+def test_me_requires_auth_and_returns_profile(
+    api_client, make_user, auth_client
+):
     user = make_user(email="me@test.dev")
     assert api_client.get("/api/auth/me").status_code == 401  # no token
 
@@ -59,7 +65,9 @@ def test_me_requires_auth_and_returns_profile(api_client, make_user, auth_client
 def test_patch_me_updates_profile(make_user, auth_client):
     user = make_user(email="edit@test.dev")
     client = auth_client(user)
-    resp = client.patch("/api/auth/me", {"full_name": "Edited Name"}, format="json")
+    resp = client.patch(
+        "/api/auth/me", {"full_name": "Edited Name"}, format="json"
+    )
     assert resp.status_code == 200
     assert resp.json()["data"]["full_name"] == "Edited Name"
 
@@ -81,6 +89,8 @@ def test_refresh_then_logout(api_client, make_user):
     # logout needs auth + the (rotated) refresh token to blacklist
     new_refresh = refreshed.json()["data"].get("refresh", login["refresh"])
     api_client.credentials(HTTP_AUTHORIZATION=f"Bearer {login['access']}")
-    out = api_client.post("/api/auth/logout", {"refresh": new_refresh}, format="json")
+    out = api_client.post(
+        "/api/auth/logout", {"refresh": new_refresh}, format="json"
+    )
     assert out.status_code == 200
     assert out.json()["success"] is True

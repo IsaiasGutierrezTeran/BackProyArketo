@@ -21,10 +21,23 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id", "email", "full_name", "phone", "role",
-            "avatar", "subscription_plan", "is_active", "date_joined",
+            "id",
+            "email",
+            "full_name",
+            "phone",
+            "role",
+            "avatar",
+            "subscription_plan",
+            "is_active",
+            "date_joined",
         ]
-        read_only_fields = ["id", "role", "subscription_plan", "is_active", "date_joined"]
+        read_only_fields = [
+            "id",
+            "role",
+            "subscription_plan",
+            "is_active",
+            "date_joined",
+        ]
 
     def get_avatar(self, obj) -> str | None:
         return absolute_media_url(obj.avatar, self.context.get("request"))
@@ -33,11 +46,17 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     """Validates self-registration input. Creation happens in the service layer."""
 
-    password = serializers.CharField(write_only=True, validators=[validate_user_password])
-    phone = serializers.CharField(required=False, allow_blank=True, validators=[validate_phone])
+    password = serializers.CharField(
+        write_only=True, validators=[validate_user_password]
+    )
+    phone = serializers.CharField(
+        required=False, allow_blank=True, validators=[validate_phone]
+    )
     # El usuario elige su rol al registrarse (superadmin nunca es opción).
     role = serializers.ChoiceField(
-        choices=["cliente", "arquitecto", "ingeniero"], required=False, default="cliente"
+        choices=["cliente", "arquitecto", "ingeniero"],
+        required=False,
+        default="cliente",
     )
 
     class Meta:
@@ -49,7 +68,9 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     """Edit own profile (full_name, phone, avatar, email). HU-3."""
 
     full_name = serializers.CharField(required=False, allow_blank=False)
-    phone = serializers.CharField(required=False, allow_blank=True, validators=[validate_phone])
+    phone = serializers.CharField(
+        required=False, allow_blank=True, validators=[validate_phone]
+    )
     email = serializers.EmailField(required=False)
 
     class Meta:
@@ -58,8 +79,14 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 
     def validate_email(self, value):
         user = self.context["request"].user
-        if User.objects.filter(email__iexact=value).exclude(pk=user.pk).exists():
-            raise serializers.ValidationError("Ya existe una cuenta con ese correo.")
+        if (
+            User.objects.filter(email__iexact=value)
+            .exclude(pk=user.pk)
+            .exists()
+        ):
+            raise serializers.ValidationError(
+                "Ya existe una cuenta con ese correo."
+            )
         return value
 
 
@@ -67,11 +94,15 @@ class ChangePasswordSerializer(serializers.Serializer):
     """Self password change: verify current, validate + set new (HU-3)."""
 
     current_password = serializers.CharField(write_only=True)
-    new_password = serializers.CharField(write_only=True, validators=[validate_user_password])
+    new_password = serializers.CharField(
+        write_only=True, validators=[validate_user_password]
+    )
 
     def validate_current_password(self, value):
         if not self.context["request"].user.check_password(value):
-            raise serializers.ValidationError("La contraseña actual no es correcta.")
+            raise serializers.ValidationError(
+                "La contraseña actual no es correcta."
+            )
         return value
 
 
@@ -86,8 +117,16 @@ class AdminUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            "id", "email", "full_name", "phone", "role",
-            "is_active", "password", "avatar", "subscription_plan", "date_joined",
+            "id",
+            "email",
+            "full_name",
+            "phone",
+            "role",
+            "is_active",
+            "password",
+            "avatar",
+            "subscription_plan",
+            "date_joined",
         ]
         read_only_fields = ["id", "date_joined", "avatar"]
 

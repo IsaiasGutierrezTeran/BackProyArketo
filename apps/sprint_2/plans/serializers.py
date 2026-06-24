@@ -17,13 +17,23 @@ class PlanSerializer(serializers.ModelSerializer):
 
     file_url = serializers.SerializerMethodField()
     filename = serializers.SerializerMethodField()
-    uploaded_by_email = serializers.EmailField(source="uploaded_by.email", read_only=True)
+    uploaded_by_email = serializers.EmailField(
+        source="uploaded_by.email", read_only=True
+    )
 
     class Meta:
         model = Plan
         fields = [
-            "id", "project", "original_format", "size_bytes", "status",
-            "file_url", "filename", "uploaded_by_email", "created_at", "updated_at",
+            "id",
+            "project",
+            "original_format",
+            "size_bytes",
+            "status",
+            "file_url",
+            "filename",
+            "uploaded_by_email",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 
@@ -38,7 +48,9 @@ class PlanSerializer(serializers.ModelSerializer):
 class PlanUploadSerializer(serializers.ModelSerializer):
     """Input for uploading a plan: a target project + the file."""
 
-    file = serializers.FileField(write_only=True, validators=[validate_plan_file])
+    file = serializers.FileField(
+        write_only=True, validators=[validate_plan_file]
+    )
 
     class Meta:
         model = Plan

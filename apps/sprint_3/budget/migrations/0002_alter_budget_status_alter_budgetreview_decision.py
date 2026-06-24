@@ -6,18 +6,35 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('budget', '0001_initial'),
+        ("budget", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='budget',
-            name='status',
-            field=models.CharField(choices=[('draft', 'Borrador'), ('submitted', 'Enviado'), ('approved', 'Aprobado'), ('observed', 'Observado'), ('rejected', 'Rechazado')], default='draft', max_length=12),
+            model_name="budget",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("draft", "Borrador"),
+                    ("submitted", "Enviado"),
+                    ("approved", "Aprobado"),
+                    ("observed", "Observado"),
+                    ("rejected", "Rechazado"),
+                ],
+                default="draft",
+                max_length=12,
+            ),
         ),
         migrations.AlterField(
-            model_name='budgetreview',
-            name='decision',
-            field=models.CharField(choices=[('approved', 'Aprobado'), ('observed', 'Observado'), ('rejected', 'Rechazado')], max_length=12),
+            model_name="budgetreview",
+            name="decision",
+            field=models.CharField(
+                choices=[
+                    ("approved", "Aprobado"),
+                    ("observed", "Observado"),
+                    ("rejected", "Rechazado"),
+                ],
+                max_length=12,
+            ),
         ),
     ]

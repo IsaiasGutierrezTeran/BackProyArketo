@@ -14,7 +14,7 @@ _SCENE_PROMPT = (
     "Eres un arquitecto. A partir de la descripción del usuario, diseña una planta "
     "arquitectónica realista de una vivienda y devuelve SOLO un objeto JSON (sin "
     "texto adicional, sin markdown) que cumpla EXACTAMENTE este contrato:\n"
-    '{'
+    "{"
     '"image":{"unit":"meters","pixels_per_meter":null},'
     '"scale":{"wall_height":2.7,"default_wall_thickness":0.12},'
     '"walls":[{"id":"w1","start":{"x":0,"y":0},"end":{"x":8,"y":0},"thickness":0.20,"height":2.7}],'
@@ -22,7 +22,7 @@ _SCENE_PROMPT = (
     '"windows":[{"id":"v1","wall_id":"w1","position":{"x":2,"y":0},"width":1.2,"height":1.2,"sill_height":1.0}],'
     '"rooms":[{"name":"Sala","x":2,"y":2,"w":4,"h":4,"area":16}],'
     '"bounds":{"min_x":0,"min_y":0,"max_x":8,"max_y":6}'
-    '}\n'
+    "}\n"
     "REGLAS OBLIGATORIAS:\n"
     "- Coordenadas en METROS, planta (x,y), origen (0,0) abajo-izquierda.\n"
     "- Muros EXTERIORES thickness 0.20, muros INTERIORES 0.12; height 2.7.\n"
@@ -40,7 +40,8 @@ _SCENE_PROMPT = (
 
 def _normalize_scene(scene: dict, *, model: str, prompt: str) -> dict:
     """Garantiza el contrato mínimo; si el LLM no da muros, cae a una planta
-    procedural *program-aware* (no a una caja genérica) marcando meta.fallback."""
+    procedural *program-aware* (no a una caja genérica) marcando meta.fallback.
+    """
     scene.setdefault("walls", [])
     scene.setdefault("doors", [])
     scene.setdefault("windows", [])
@@ -55,7 +56,9 @@ def _normalize_scene(scene: dict, *, model: str, prompt: str) -> dict:
         scene["meta"]["intended_model"] = model
         return scene
     scene.setdefault("rooms", [])
-    scene.setdefault("scale", {"wall_height": 2.7, "default_wall_thickness": 0.12})
+    scene.setdefault(
+        "scale", {"wall_height": 2.7, "default_wall_thickness": 0.12}
+    )
     scene.setdefault("meta", {"model": model, "version": "1.0"})
     scene.setdefault("image", {"unit": "meters", "pixels_per_meter": None})
     return scene
@@ -80,12 +83,17 @@ class GeminiDesignProvider(DesignProviderBase):
         except (ValueError, json.JSONDecodeError) as exc:
             raise ApiException(
                 "La IA no devolvió un plano válido. Reintenta con más detalle.",
-                code="inference_error", status_code=502,
+                code="inference_error",
+                status_code=502,
             ) from exc
-        return _normalize_scene(scene, model="gemini-design", prompt=prompt or "")
+        return _normalize_scene(
+            scene, model="gemini-design", prompt=prompt or ""
+        )
 
     def chat(self, messages: list[dict]) -> str:
-        convo = "\n".join(f"{m.get('role')}: {m.get('content')}" for m in messages)
+        convo = "\n".join(
+            f"{m.get('role')}: {m.get('content')}" for m in messages
+        )
         return gemini_generate_text(
             "Eres un asistente de diseño arquitectónico. Responde en español, "
             "conciso y útil.\n" + convo

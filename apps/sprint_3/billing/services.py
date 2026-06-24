@@ -34,9 +34,13 @@ def get_subscription(user) -> Subscription:
 
 def subscribe(*, user, plan_code: str) -> tuple[Subscription, str | None]:
     """Start (or change) a subscription. Returns (subscription, checkout_url)."""
-    plan = SubscriptionPlan.objects.filter(code=plan_code, is_active=True).first()
+    plan = SubscriptionPlan.objects.filter(
+        code=plan_code, is_active=True
+    ).first()
     if plan is None:
-        raise ApiException("Plan no encontrado o inactivo.", code="not_found", status_code=404)
+        raise ApiException(
+            "Plan no encontrado o inactivo.", code="not_found", status_code=404
+        )
 
     gateway = get_gateway()
     result = gateway.start_subscription(user=user, plan=plan)
@@ -73,15 +77,22 @@ def cancel(*, user) -> Subscription:
 # HMAC-SHA256 so the `stripe` SDK is not required (matches StripeGateway, which
 # also uses plain HTTP). Never process an unverified webhook.
 
-def _verify_stripe_signature(payload: bytes, sig_header: str, tolerance: int = 300) -> dict:
+
+def _verify_stripe_signature(
+    payload: bytes, sig_header: str, tolerance: int = 300
+) -> dict:
     secret = settings.STRIPE_WEBHOOK_SECRET
     if not secret:
         raise ApiException(
-            "STRIPE_WEBHOOK_SECRET no configurada.", code="bad_request", status_code=400
+            "STRIPE_WEBHOOK_SECRET no configurada.",
+            code="bad_request",
+            status_code=400,
         )
     if not sig_header:
         raise ApiException(
-            "Falta la cabecera Stripe-Signature.", code="bad_request", status_code=400
+            "Falta la cabecera Stripe-Signature.",
+            code="bad_request",
+            status_code=400,
         )
 
     parts: dict[str, str] = {}
@@ -91,21 +102,31 @@ def _verify_stripe_signature(payload: bytes, sig_header: str, tolerance: int = 3
             parts.setdefault(key.strip(), value.strip())
     timestamp, signature = parts.get("t"), parts.get("v1")
     if not timestamp or not signature:
-        raise ApiException("Firma Stripe inválida.", code="bad_request", status_code=400)
+        raise ApiException(
+            "Firma Stripe inválida.", code="bad_request", status_code=400
+        )
 
     signed_payload = f"{timestamp}.".encode() + payload
-    expected = hmac.new(secret.encode(), signed_payload, hashlib.sha256).hexdigest()
+    expected = hmac.new(
+        secret.encode(), signed_payload, hashlib.sha256
+    ).hexdigest()
     if not hmac.compare_digest(expected, signature):
-        raise ApiException("Firma de webhook inválida.", code="bad_request", status_code=400)
+        raise ApiException(
+            "Firma de webhook inválida.", code="bad_request", status_code=400
+        )
 
     try:
         if abs(time.time() - int(timestamp)) > tolerance:
             raise ApiException(
-                "Webhook fuera de la ventana temporal.", code="bad_request", status_code=400
+                "Webhook fuera de la ventana temporal.",
+                code="bad_request",
+                status_code=400,
             )
     except ValueError as exc:
         raise ApiException(
-            "Timestamp de webhook inválido.", code="bad_request", status_code=400
+            "Timestamp de webhook inválido.",
+            code="bad_request",
+            status_code=400,
         ) from exc
 
     try:
@@ -141,12 +162,18 @@ def process_stripe_webhook(*, payload: bytes, signature: str) -> dict:
             subscription.save()
             _apply_plan_to_user(subscription)
 
-    elif event_type in {"customer.subscription.updated", "customer.subscription.deleted"}:
+    elif event_type in {
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    }:
         subscription = Subscription.objects.filter(
             stripe_subscription_id=obj.get("id", "")
         ).first()
         if subscription is not None:
-            canceled = event_type.endswith("deleted") or obj.get("status") == "canceled"
+            canceled = (
+                event_type.endswith("deleted")
+                or obj.get("status") == "canceled"
+            )
             if canceled:
                 subscription.status = SubscriptionStatus.CANCELED
                 if subscription.user_id:
@@ -158,7 +185,9 @@ def process_stripe_webhook(*, payload: bytes, signature: str) -> dict:
                     "past_due": SubscriptionStatus.PAST_DUE,
                     "incomplete": SubscriptionStatus.INCOMPLETE,
                 }
-                subscription.status = status_map.get(obj.get("status", ""), subscription.status)
+                subscription.status = status_map.get(
+                    obj.get("status", ""), subscription.status
+                )
             period_end = obj.get("current_period_end")
             if period_end:
                 subscription.current_period_end = datetime.fromtimestamp(

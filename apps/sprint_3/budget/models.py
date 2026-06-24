@@ -32,7 +32,9 @@ class Material(BaseModel):
     unit = models.CharField(max_length=20, help_text="m², m³, saco, unidad…")
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     block_quality = models.CharField(
-        max_length=12, choices=BlockQuality.choices, default=BlockQuality.STANDARD
+        max_length=12,
+        choices=BlockQuality.choices,
+        default=BlockQuality.STANDARD,
     )
     is_active = models.BooleanField(default=True)
 
@@ -53,16 +55,22 @@ class Budget(BaseModel):
         "projects.Project", on_delete=models.CASCADE, related_name="budgets"
     )
     created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="budgets",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="budgets",
     )
     status = models.CharField(
         max_length=12, choices=BudgetStatus.choices, default=BudgetStatus.DRAFT
     )
     # Mano de obra: number of workers + their total cost.
     labor_people = models.PositiveIntegerField(default=0)
-    labor_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-    materials_cost = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    labor_cost = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0
+    )
+    materials_cost = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0
+    )
     total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     currency = models.CharField(max_length=8, default="USD")
 
@@ -71,8 +79,12 @@ class Budget(BaseModel):
 
 
 class BudgetItem(BaseModel):
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE, related_name="items")
-    material = models.ForeignKey(Material, on_delete=models.PROTECT, related_name="+")
+    budget = models.ForeignKey(
+        Budget, on_delete=models.CASCADE, related_name="items"
+    )
+    material = models.ForeignKey(
+        Material, on_delete=models.PROTECT, related_name="+"
+    )
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     # Price captured at creation time so later catalog changes don't alter the budget.
     unit_price_snapshot = models.DecimalField(max_digits=12, decimal_places=2)
@@ -89,10 +101,14 @@ class ReviewDecision(models.TextChoices):
 
 
 class BudgetReview(BaseModel):
-    budget = models.OneToOneField(Budget, on_delete=models.CASCADE, related_name="review")
+    budget = models.OneToOneField(
+        Budget, on_delete=models.CASCADE, related_name="review"
+    )
     reviewer = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="budget_reviews",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="budget_reviews",
     )
     decision = models.CharField(max_length=12, choices=ReviewDecision.choices)
     comments = models.TextField(blank=True)

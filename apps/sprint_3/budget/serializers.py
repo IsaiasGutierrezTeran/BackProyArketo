@@ -20,30 +20,51 @@ class MaterialCategorySerializer(serializers.ModelSerializer):
 
 
 class MaterialSerializer(serializers.ModelSerializer):
-    category_name = serializers.CharField(source="category.name", read_only=True)
+    category_name = serializers.CharField(
+        source="category.name", read_only=True
+    )
 
     class Meta:
         model = Material
         fields = [
-            "id", "category", "category_name", "name", "unit",
-            "unit_price", "block_quality", "is_active",
+            "id",
+            "category",
+            "category_name",
+            "name",
+            "unit",
+            "unit_price",
+            "block_quality",
+            "is_active",
         ]
 
 
 class BudgetItemSerializer(serializers.ModelSerializer):
-    material_name = serializers.CharField(source="material.name", read_only=True)
+    material_name = serializers.CharField(
+        source="material.name", read_only=True
+    )
 
     class Meta:
         model = BudgetItem
         fields = [
-            "id", "material", "material_name", "quantity",
-            "unit_price_snapshot", "subtotal",
+            "id",
+            "material",
+            "material_name",
+            "quantity",
+            "unit_price_snapshot",
+            "subtotal",
         ]
-        read_only_fields = ["id", "unit_price_snapshot", "subtotal", "material_name"]
+        read_only_fields = [
+            "id",
+            "unit_price_snapshot",
+            "subtotal",
+            "material_name",
+        ]
 
 
 class BudgetReviewSerializer(serializers.ModelSerializer):
-    reviewer_email = serializers.EmailField(source="reviewer.email", read_only=True)
+    reviewer_email = serializers.EmailField(
+        source="reviewer.email", read_only=True
+    )
 
     class Meta:
         model = BudgetReview
@@ -54,14 +75,26 @@ class BudgetReviewSerializer(serializers.ModelSerializer):
 class BudgetSerializer(serializers.ModelSerializer):
     items = BudgetItemSerializer(many=True, read_only=True)
     review = BudgetReviewSerializer(read_only=True)
-    created_by_email = serializers.EmailField(source="created_by.email", read_only=True)
+    created_by_email = serializers.EmailField(
+        source="created_by.email", read_only=True
+    )
 
     class Meta:
         model = Budget
         fields = [
-            "id", "project", "created_by_email", "status",
-            "labor_people", "labor_cost", "materials_cost", "total", "currency",
-            "items", "review", "created_at", "updated_at",
+            "id",
+            "project",
+            "created_by_email",
+            "status",
+            "labor_people",
+            "labor_cost",
+            "materials_cost",
+            "total",
+            "currency",
+            "items",
+            "review",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 
@@ -69,7 +102,9 @@ class BudgetSerializer(serializers.ModelSerializer):
 # --- Input serializers ------------------------------------------------------
 class BudgetItemInputSerializer(serializers.Serializer):
     material = serializers.IntegerField(min_value=1)
-    quantity = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0)
+    quantity = serializers.DecimalField(
+        max_digits=12, decimal_places=2, min_value=0
+    )
 
 
 class BudgetCreateSerializer(serializers.Serializer):
@@ -83,7 +118,9 @@ class BudgetCreateSerializer(serializers.Serializer):
 
 
 class BudgetReviewInputSerializer(serializers.Serializer):
-    decision = serializers.ChoiceField(choices=["approved", "observed", "rejected"])
+    decision = serializers.ChoiceField(
+        choices=["approved", "observed", "rejected"]
+    )
     comments = serializers.CharField(required=False, allow_blank=True)
 
 

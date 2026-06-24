@@ -12,14 +12,17 @@ pytestmark = pytest.mark.django_db
 
 def test_invite_is_pending_until_accepted(make_user, auth_client):
     """Invite by user id -> PENDING; the invitee only sees the project after accepting."""
-    owner = make_user(email="o@x.dev", subscription_plan="enterprise")  # invitar = Enterprise
+    owner = make_user(
+        email="o@x.dev", subscription_plan="enterprise"
+    )  # invitar = Enterprise
     editor = make_user(email="e@x.dev")
     project = Project.objects.create(owner=owner, name="P")
 
     # Owner invites the picked user (by id), starts PENDING.
     invited = auth_client(owner).post(
         f"/api/projects/{project.id}/members/",
-        {"user": editor.id, "role": "editor"}, format="json",
+        {"user": editor.id, "role": "editor"},
+        format="json",
     )
     assert invited.status_code == 201
     assert invited.json()["data"]["status"] == "pending"
@@ -32,7 +35,9 @@ def test_invite_is_pending_until_accepted(make_user, auth_client):
     membership_id = inbox[0]["id"]
 
     # Accept -> now visible.
-    accepted = auth_client(editor).post(f"/api/invitations/{membership_id}/accept/")
+    accepted = auth_client(editor).post(
+        f"/api/invitations/{membership_id}/accept/"
+    )
     assert accepted.status_code == 200
     assert accepted.json()["data"]["status"] == "accepted"
 
@@ -47,12 +52,15 @@ def test_invitee_can_decline(make_user, auth_client):
 
     auth_client(owner).post(
         f"/api/projects/{project.id}/members/",
-        {"user": invitee.id, "role": "viewer"}, format="json",
+        {"user": invitee.id, "role": "viewer"},
+        format="json",
     )
     inbox = auth_client(invitee).get("/api/invitations/").json()["data"]
     membership_id = inbox[0]["id"]
 
-    declined = auth_client(invitee).post(f"/api/invitations/{membership_id}/decline/")
+    declined = auth_client(invitee).post(
+        f"/api/invitations/{membership_id}/decline/"
+    )
     assert declined.status_code == 204
     assert auth_client(invitee).get("/api/invitations/").json()["data"] == []
 
@@ -64,7 +72,8 @@ def test_pro_can_invite(make_user, auth_client):
     project = Project.objects.create(owner=owner, name="P")
     resp = auth_client(owner).post(
         f"/api/projects/{project.id}/members/",
-        {"user": other.id, "role": "editor"}, format="json",
+        {"user": other.id, "role": "editor"},
+        format="json",
     )
     assert resp.status_code == 201
     assert resp.json()["data"]["status"] == "pending"
@@ -77,7 +86,8 @@ def test_free_cannot_invite(make_user, auth_client):
     project = Project.objects.create(owner=owner, name="P")
     resp = auth_client(owner).post(
         f"/api/projects/{project.id}/members/",
-        {"user": other.id, "role": "editor"}, format="json",
+        {"user": other.id, "role": "editor"},
+        format="json",
     )
     assert resp.status_code == 403
 
@@ -88,7 +98,8 @@ def test_non_member_cannot_invite(make_user, auth_client):
     project = Project.objects.create(owner=owner, name="P")
     resp = auth_client(outsider).post(
         f"/api/projects/{project.id}/members/",
-        {"email": "x2@x.dev", "role": "editor"}, format="json",
+        {"email": "x2@x.dev", "role": "editor"},
+        format="json",
     )
     assert resp.status_code in (403, 404)
 
@@ -97,9 +108,13 @@ def test_viewer_cannot_upload_plan(make_user, auth_client):
     owner = make_user(email="o3@x.dev")
     viewer = make_user(email="v@x.dev")
     project = Project.objects.create(owner=owner, name="P")
-    ProjectMembership.objects.create(project=project, user=viewer, role=MembershipRole.VIEWER)
+    ProjectMembership.objects.create(
+        project=project, user=viewer, role=MembershipRole.VIEWER
+    )
 
-    png = SimpleUploadedFile("p.png", b"\x89PNG\r\n\x1a\n" + b"0" * 40, content_type="image/png")
+    png = SimpleUploadedFile(
+        "p.png", b"\x89PNG\r\n\x1a\n" + b"0" * 40, content_type="image/png"
+    )
     resp = auth_client(viewer).post(
         "/api/plans/", {"project": project.id, "file": png}, format="multipart"
     )
@@ -110,10 +125,14 @@ def test_editor_can_comment(make_user, auth_client):
     owner = make_user(email="o4@x.dev")
     editor = make_user(email="ed@x.dev")
     project = Project.objects.create(owner=owner, name="P")
-    ProjectMembership.objects.create(project=project, user=editor, role=MembershipRole.EDITOR)
+    ProjectMembership.objects.create(
+        project=project, user=editor, role=MembershipRole.EDITOR
+    )
 
     resp = auth_client(editor).post(
-        "/api/comments/", {"project": project.id, "body": "buen avance"}, format="json"
+        "/api/comments/",
+        {"project": project.id, "body": "buen avance"},
+        format="json",
     )
     assert resp.status_code == 201
     assert resp.json()["data"]["author_email"] == "ed@x.dev"

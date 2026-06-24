@@ -38,11 +38,20 @@ def env(name: str, default: str | None = None) -> str | None:
 
 
 def env_bool(name: str, default: bool = False) -> bool:
-    return str(os.environ.get(name, default)).strip().lower() in {"1", "true", "yes", "on"}
+    return str(os.environ.get(name, default)).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
 
 
 def env_list(name: str, default: str = "") -> list[str]:
-    return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
+    return [
+        item.strip()
+        for item in os.environ.get(name, default).split(",")
+        if item.strip()
+    ]
 
 
 # --- Core -------------------------------------------------------------------
@@ -136,10 +145,16 @@ DATABASES = {"default": dj_database_url.parse(_database_url, conn_max_age=600)}
 AUTH_USER_MODEL = "accounts.User"
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
+    },
 ]
 
 # --- DRF + JWT + OpenAPI ----------------------------------------------------
@@ -150,21 +165,25 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-    "DEFAULT_RENDERER_CLASSES": (
-        "core.renderers.EnvelopeJSONRenderer",
-    ),
+    "DEFAULT_RENDERER_CLASSES": ("core.renderers.EnvelopeJSONRenderer",),
     "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardPagination",
     "PAGE_SIZE": 20,
     "EXCEPTION_HANDLER": "core.exceptions.api_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     # Throttling: solo afecta a vistas con `throttle_scope` (p.ej. login, HU-2).
-    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.ScopedRateThrottle",),
+    "DEFAULT_THROTTLE_CLASSES": (
+        "rest_framework.throttling.ScopedRateThrottle",
+    ),
     "DEFAULT_THROTTLE_RATES": {"login": env("LOGIN_THROTTLE_RATE", "10/min")},
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(env("JWT_ACCESS_MINUTES", "60"))),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=int(env("JWT_REFRESH_DAYS", "7"))),
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(env("JWT_ACCESS_MINUTES", "60"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=int(env("JWT_REFRESH_DAYS", "7"))
+    ),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -185,7 +204,9 @@ SPECTACULAR_SETTINGS = {
 }
 
 # --- CORS (browser clients; Flutter native ignores this) --------------------
-CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS", "http://localhost:4200")
+CORS_ALLOWED_ORIGINS = env_list(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:4200"
+)
 CORS_ALLOW_CREDENTIALS = True
 
 # --- I18N -------------------------------------------------------------------
@@ -216,9 +237,13 @@ if USE_S3:
     AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", "")
     AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", "us-east-1")
     # MinIO / S3-compatible: set the endpoint (empty -> real AWS S3).
-    AWS_S3_ENDPOINT_URL = (env("AWS_S3_ENDPOINT_URL", "") or "").strip() or None
+    AWS_S3_ENDPOINT_URL = (
+        env("AWS_S3_ENDPOINT_URL", "") or ""
+    ).strip() or None
     AWS_S3_USE_SSL = env_bool("AWS_S3_USE_SSL", True)
-    AWS_S3_ADDRESSING_STYLE = env("AWS_S3_ADDRESSING_STYLE", "auto")  # 'path' for MinIO
+    AWS_S3_ADDRESSING_STYLE = env(
+        "AWS_S3_ADDRESSING_STYLE", "auto"
+    )  # 'path' for MinIO
     # Private bucket in prod -> presigned (querystring-auth) URLs so the mobile
     # app / 3D viewer can load media directly. AWS_QUERYSTRING_AUTH=true in prod;
     # set false only for a public bucket / MinIO.
@@ -228,37 +253,49 @@ if USE_S3:
     AWS_S3_FILE_OVERWRITE = False
     STORAGES = {
         "default": {"BACKEND": "storages.backends.s3.S3Storage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     }
 else:
     STORAGES = {
         "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"
+        },
     }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Detection / 2D->3D (Sprint 2) ------------------------------------------
 # Default detector keeps dev unblocked without GPU/weights/legacy service.
-DETECTION_DEFAULT_DETECTOR = env("DETECTION_DEFAULT_DETECTOR", "mock")  # mock | maskrcnn
+DETECTION_DEFAULT_DETECTOR = env(
+    "DETECTION_DEFAULT_DETECTOR", "mock"
+)  # mock | maskrcnn
 # Real-world extrusion defaults (meters) for GLB generation.
 WALL_HEIGHT_M = float(env("WALL_HEIGHT_M", "2.7"))
 DEFAULT_WALL_THICKNESS_M = float(env("DEFAULT_WALL_THICKNESS_M", "0.15"))
 
 # --- Integrations (used in later sprints) -----------------------------------
-FLOORPLAN_API_URL = (env("FLOORPLAN_API_URL", "http://127.0.0.1:8000") or "").rstrip("/")
+FLOORPLAN_API_URL = (
+    env("FLOORPLAN_API_URL", "http://127.0.0.1:8000") or ""
+).rstrip("/")
 FLOORPLAN_API_TIMEOUT = float(env("FLOORPLAN_API_TIMEOUT", "120"))
 # --- AI design / risk (Sprint 3) — mock by default; gemini or aws opt-in -----
 AI_DESIGN_PROVIDER = env("AI_DESIGN_PROVIDER", "mock")  # mock | gemini | aws
 RISK_ANALYZER = env("RISK_ANALYZER", "mock")  # mock | gemini | aws
-SPEECH_TO_TEXT_PROVIDER = env("SPEECH_TO_TEXT_PROVIDER", "mock")  # mock | gemini | aws
+SPEECH_TO_TEXT_PROVIDER = env(
+    "SPEECH_TO_TEXT_PROVIDER", "mock"
+)  # mock | gemini | aws
 GEMINI_MODEL = env("GEMINI_MODEL", "gemini-1.5-flash")
 
 # --- AWS managed AI (the "aws" provider): Bedrock (Claude) + Transcribe ------
 # Credentials come from the EC2 instance role (no keys). Region defaults to the
 # S3 region. Model id is configurable; default = Claude Haiku 4.5 on Bedrock.
 AWS_REGION = env("AWS_REGION", env("AWS_S3_REGION_NAME", "us-east-1"))
-BEDROCK_MODEL_ID = env("BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+BEDROCK_MODEL_ID = env(
+    "BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+)
 TRANSCRIBE_LANGUAGE = env("TRANSCRIBE_LANGUAGE", "es-US")
 
 # --- Budget (Sprint 3) ------------------------------------------------------
@@ -273,5 +310,9 @@ GEMINI_API_KEY = env("GEMINI_API_KEY", "")
 BILLING_GATEWAY = env("BILLING_GATEWAY", "mock")  # mock | stripe
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", "")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", "")
-BILLING_SUCCESS_URL = env("BILLING_SUCCESS_URL", "http://localhost:4200/billing/success")
-BILLING_CANCEL_URL = env("BILLING_CANCEL_URL", "http://localhost:4200/billing/cancel")
+BILLING_SUCCESS_URL = env(
+    "BILLING_SUCCESS_URL", "http://localhost:4200/billing/success"
+)
+BILLING_CANCEL_URL = env(
+    "BILLING_CANCEL_URL", "http://localhost:4200/billing/cancel"
+)

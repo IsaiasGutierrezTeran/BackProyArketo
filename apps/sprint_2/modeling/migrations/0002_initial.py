@@ -9,18 +9,27 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('modeling', '0001_initial'),
-        ('plans', '0001_initial'),
+        ("modeling", "0001_initial"),
+        ("plans", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='model3d',
-            name='source_plan',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='models3d', to='plans.plan'),
+            model_name="model3d",
+            name="source_plan",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="models3d",
+                to="plans.plan",
+            ),
         ),
         migrations.AddIndex(
-            model_name='model3d',
-            index=models.Index(fields=['project', 'is_current'], name='modeling_mo_project_e171cf_idx'),
+            model_name="model3d",
+            index=models.Index(
+                fields=["project", "is_current"],
+                name="modeling_mo_project_e171cf_idx",
+            ),
         ),
     ]

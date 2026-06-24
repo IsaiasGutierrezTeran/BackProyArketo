@@ -10,8 +10,16 @@ from .models import Subscription, SubscriptionPlan
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubscriptionPlan
-        fields = ["id", "code", "name", "price", "interval", "features",
-                  "stripe_price_id", "is_active"]
+        fields = [
+            "id",
+            "code",
+            "name",
+            "price",
+            "interval",
+            "features",
+            "stripe_price_id",
+            "is_active",
+        ]
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -19,7 +27,14 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subscription
-        fields = ["id", "plan", "plan_code", "status", "current_period_end", "updated_at"]
+        fields = [
+            "id",
+            "plan",
+            "plan_code",
+            "status",
+            "current_period_end",
+            "updated_at",
+        ]
         read_only_fields = fields
 
 

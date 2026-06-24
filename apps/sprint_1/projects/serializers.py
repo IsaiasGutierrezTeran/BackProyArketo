@@ -21,9 +21,15 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            "id", "name", "description", "status",
-            "thumbnail", "thumbnail_upload",
-            "owner_email", "created_at", "updated_at",
+            "id",
+            "name",
+            "description",
+            "status",
+            "thumbnail",
+            "thumbnail_upload",
+            "owner_email",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = ["id", "owner_email", "created_at", "updated_at"]
 
@@ -52,11 +58,21 @@ class ProjectMembershipSerializer(serializers.ModelSerializer):
     """A collaborator row as seen by the project owner (includes invite status)."""
 
     user_email = serializers.EmailField(source="user.email", read_only=True)
-    user_full_name = serializers.CharField(source="user.full_name", read_only=True)
+    user_full_name = serializers.CharField(
+        source="user.full_name", read_only=True
+    )
 
     class Meta:
         model = ProjectMembership
-        fields = ["id", "project", "user_email", "user_full_name", "role", "status", "created_at"]
+        fields = [
+            "id",
+            "project",
+            "user_email",
+            "user_full_name",
+            "role",
+            "status",
+            "created_at",
+        ]
         read_only_fields = fields
 
 
@@ -64,14 +80,24 @@ class InvitationSerializer(serializers.ModelSerializer):
     """A pending invitation as seen by the invited user (their inbox)."""
 
     project_name = serializers.CharField(source="project.name", read_only=True)
-    owner_email = serializers.EmailField(source="project.owner.email", read_only=True)
-    invited_by_email = serializers.EmailField(source="invited_by.email", read_only=True, default=None)
+    owner_email = serializers.EmailField(
+        source="project.owner.email", read_only=True
+    )
+    invited_by_email = serializers.EmailField(
+        source="invited_by.email", read_only=True, default=None
+    )
 
     class Meta:
         model = ProjectMembership
         fields = [
-            "id", "project", "project_name", "owner_email",
-            "invited_by_email", "role", "status", "created_at",
+            "id",
+            "project",
+            "project_name",
+            "owner_email",
+            "invited_by_email",
+            "role",
+            "status",
+            "created_at",
         ]
         read_only_fields = fields
 
@@ -93,9 +119,18 @@ class InviteMemberSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author_email = serializers.EmailField(source="author.email", read_only=True)
+    author_email = serializers.EmailField(
+        source="author.email", read_only=True
+    )
 
     class Meta:
         model = Comment
-        fields = ["id", "project", "author_email", "body", "parent", "created_at"]
+        fields = [
+            "id",
+            "project",
+            "author_email",
+            "body",
+            "parent",
+            "created_at",
+        ]
         read_only_fields = ["id", "author_email", "created_at"]

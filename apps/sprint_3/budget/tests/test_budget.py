@@ -16,21 +16,35 @@ pytestmark = pytest.mark.django_db
 def _material(price="10.00"):
     category = MaterialCategory.objects.create(name="Mampostería")
     return Material.objects.create(
-        category=category, name="Bloque", unit="unidad",
-        unit_price=Decimal(price), block_quality=BlockQuality.STANDARD,
+        category=category,
+        name="Bloque",
+        unit="unidad",
+        unit_price=Decimal(price),
+        block_quality=BlockQuality.STANDARD,
     )
 
 
 def test_material_write_requires_superadmin(make_user, auth_client):
     category = MaterialCategory.objects.create(name="Cat")
-    payload = {"category": category.id, "name": "X", "unit": "u",
-               "unit_price": "5.00", "block_quality": "standard"}
+    payload = {
+        "category": category.id,
+        "name": "X",
+        "unit": "u",
+        "unit_price": "5.00",
+        "block_quality": "standard",
+    }
 
     cliente = auth_client(make_user(role=Role.CLIENTE))
-    assert cliente.post("/api/materials/", payload, format="json").status_code == 403
+    assert (
+        cliente.post("/api/materials/", payload, format="json").status_code
+        == 403
+    )
 
     admin = auth_client(make_user(email="s@x.dev", role=Role.SUPERADMIN))
-    assert admin.post("/api/materials/", payload, format="json").status_code == 201
+    assert (
+        admin.post("/api/materials/", payload, format="json").status_code
+        == 201
+    )
 
 
 def test_material_catalog_readable_by_any_user(make_user, auth_client):
@@ -48,8 +62,12 @@ def test_create_budget_computes_total(make_user, auth_client):
     client = auth_client(user)
     resp = client.post(
         "/api/budgets/",
-        {"project": project.id, "labor_people": 3, "labor_cost": "100.00",
-         "items": [{"material": material.id, "quantity": "5"}]},
+        {
+            "project": project.id,
+            "labor_people": 3,
+            "labor_cost": "100.00",
+            "items": [{"material": material.id, "quantity": "5"}],
+        },
         format="json",
     )
     assert resp.status_code == 201
@@ -68,7 +86,10 @@ def test_submit_then_engineer_review(make_user, auth_client):
     owner_client = auth_client(owner)
     budget_id = owner_client.post(
         "/api/budgets/",
-        {"project": project.id, "items": [{"material": material.id, "quantity": "2"}]},
+        {
+            "project": project.id,
+            "items": [{"material": material.id, "quantity": "2"}],
+        },
         format="json",
     ).json()["data"]["id"]
 
@@ -78,7 +99,9 @@ def test_submit_then_engineer_review(make_user, auth_client):
 
     # The project owner (cliente) cannot review.
     denied = owner_client.post(
-        f"/api/budgets/{budget_id}/review/", {"decision": "approved"}, format="json"
+        f"/api/budgets/{budget_id}/review/",
+        {"decision": "approved"},
+        format="json",
     )
     assert denied.status_code == 403
 
@@ -86,7 +109,8 @@ def test_submit_then_engineer_review(make_user, auth_client):
     engineer_client = auth_client(engineer)
     reviewed = engineer_client.post(
         f"/api/budgets/{budget_id}/review/",
-        {"decision": "approved", "comments": "Conforme"}, format="json",
+        {"decision": "approved", "comments": "Conforme"},
+        format="json",
     )
     assert reviewed.status_code == 200
     body = reviewed.json()["data"]

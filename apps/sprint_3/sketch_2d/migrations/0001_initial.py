@@ -10,28 +10,70 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('projects', '0002_comment_projectmembership'),
+        ("projects", "0002_comment_projectmembership"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Boceto2D',
+            name="Boceto2D",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('prompt', models.TextField()),
-                ('imagen', models.ImageField(blank=True, null=True, upload_to='sketch2d/')),
-                ('imagen_url', models.CharField(blank=True, max_length=255)),
-                ('proveedor_ia', models.CharField(default='mock', max_length=20)),
-                ('estado', models.CharField(choices=[('generado', 'Generado'), ('error', 'Error')], default='generado', max_length=15)),
-                ('proyecto', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='bocetos', to='projects.project')),
-                ('usuario', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='bocetos', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("prompt", models.TextField()),
+                (
+                    "imagen",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="sketch2d/"
+                    ),
+                ),
+                ("imagen_url", models.CharField(blank=True, max_length=255)),
+                (
+                    "proveedor_ia",
+                    models.CharField(default="mock", max_length=20),
+                ),
+                (
+                    "estado",
+                    models.CharField(
+                        choices=[("generado", "Generado"), ("error", "Error")],
+                        default="generado",
+                        max_length=15,
+                    ),
+                ),
+                (
+                    "proyecto",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="bocetos",
+                        to="projects.project",
+                    ),
+                ),
+                (
+                    "usuario",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="bocetos",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
+                "ordering": ["-created_at"],
+                "abstract": False,
             },
         ),
     ]

@@ -26,8 +26,10 @@ class EnvelopeJSONRenderer(JSONRenderer):
         status_code = getattr(response, "status_code", 200) or 200
 
         # Already enveloped (exception handler) -> don't wrap twice.
-        if isinstance(data, dict) and "success" in data and (
-            "error" in data or "data" in data
+        if (
+            isinstance(data, dict)
+            and "success" in data
+            and ("error" in data or "data" in data)
         ):
             return super().render(data, accepted_media_type, renderer_context)
 
@@ -39,9 +41,15 @@ class EnvelopeJSONRenderer(JSONRenderer):
         else:
             meta: dict = {}
             payload = data
-            if isinstance(data, dict) and "results" in data and "count" in data:
+            if (
+                isinstance(data, dict)
+                and "results" in data
+                and "count" in data
+            ):
                 payload = data["results"]
-                meta["pagination"] = {k: v for k, v in data.items() if k != "results"}
+                meta["pagination"] = {
+                    k: v for k, v in data.items() if k != "results"
+                }
             body = {"success": True, "data": payload, "meta": meta}
 
         return super().render(body, accepted_media_type, renderer_context)

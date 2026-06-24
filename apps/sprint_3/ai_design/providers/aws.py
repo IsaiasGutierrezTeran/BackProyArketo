@@ -21,7 +21,9 @@ class AwsDesignProvider(DesignProviderBase):
 
     def generate_scene(self, prompt: str) -> dict:
         try:
-            text = bedrock_generate_text(_SCENE_PROMPT + (prompt or ""), max_tokens=2000)
+            text = bedrock_generate_text(
+                _SCENE_PROMPT + (prompt or ""), max_tokens=2000
+            )
             scene = _extract_json(text)
         except (ApiException, ValueError, json.JSONDecodeError):
             # Bedrock no disponible (cuota/throttle de cuenta nueva, respuesta no
@@ -35,10 +37,14 @@ class AwsDesignProvider(DesignProviderBase):
             scene["meta"]["fallback"] = True
             scene["meta"]["intended_model"] = "bedrock-design"
             return scene
-        return _normalize_scene(scene, model="bedrock-design", prompt=prompt or "")
+        return _normalize_scene(
+            scene, model="bedrock-design", prompt=prompt or ""
+        )
 
     def chat(self, messages: list[dict]) -> str:
-        convo = "\n".join(f"{m.get('role')}: {m.get('content')}" for m in messages)
+        convo = "\n".join(
+            f"{m.get('role')}: {m.get('content')}" for m in messages
+        )
         return bedrock_generate_text(
             convo,
             system=(

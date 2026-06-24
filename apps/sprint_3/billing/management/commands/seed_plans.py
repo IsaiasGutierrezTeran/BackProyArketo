@@ -1,6 +1,6 @@
 """Seed subscription plans (idempotent).
 
-    python manage.py seed_plans
+python manage.py seed_plans
 """
 
 from __future__ import annotations
@@ -15,7 +15,17 @@ from billing.models import BillingInterval, SubscriptionPlan
 # (enforzado en core.entitlements).
 PLANS = [
     ("free", "Free", "0.00", ["1 proyecto", "Detección mock"]),
-    ("pro", "Pro", "19.00", ["Proyectos ilimitados", "Mask R-CNN / IA visión", "Riesgos IA", "Colaboración"]),
+    (
+        "pro",
+        "Pro",
+        "19.00",
+        [
+            "Proyectos ilimitados",
+            "Mask R-CNN / IA visión",
+            "Riesgos IA",
+            "Colaboración",
+        ],
+    ),
     ("enterprise", "Enterprise", "99.00", ["Todo Pro", "Soporte prioritario"]),
 ]
 
@@ -30,8 +40,14 @@ class Command(BaseCommand):
             SubscriptionPlan.objects.update_or_create(
                 code=code,
                 defaults={
-                    "name": name, "price": Decimal(price),
-                    "interval": BillingInterval.MONTH, "features": features,
+                    "name": name,
+                    "price": Decimal(price),
+                    "interval": BillingInterval.MONTH,
+                    "features": features,
                 },
             )
-        self.stdout.write(self.style.SUCCESS(f"seed_plans: {len(PLANS)} planes sincronizados (Bs)."))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"seed_plans: {len(PLANS)} planes sincronizados (Bs)."
+            )
+        )

@@ -15,16 +15,25 @@ from core.exceptions import ApiException
 from .base import DetectorBase
 
 _PASSTHROUGH_PARAMS = (
-    "pixels_per_meter", "confidence_threshold", "wall_height", "default_wall_thickness",
+    "pixels_per_meter",
+    "confidence_threshold",
+    "wall_height",
+    "default_wall_thickness",
 )
 
 
 class MaskRCNNDetector(DetectorBase):
     name = "maskrcnn"
 
-    def detect(self, image_bytes: bytes, *, options: dict | None = None) -> dict:
+    def detect(
+        self, image_bytes: bytes, *, options: dict | None = None
+    ) -> dict:
         options = options or {}
-        params = {k: options[k] for k in _PASSTHROUGH_PARAMS if options.get(k) is not None}
+        params = {
+            k: options[k]
+            for k in _PASSTHROUGH_PARAMS
+            if options.get(k) is not None
+        }
         url = f"{settings.FLOORPLAN_API_URL}/detect"
         try:
             resp = requests.post(

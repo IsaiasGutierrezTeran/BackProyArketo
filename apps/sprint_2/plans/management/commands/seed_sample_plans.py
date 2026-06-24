@@ -45,9 +45,19 @@ class Command(BaseCommand):
                 original_format=PlanFormat.PNG,
                 size_bytes=len(plan_bytes),
             )
-            plan.file.save(f"sample_project_{project.id}.png", ContentFile(plan_bytes), save=True)
+            plan.file.save(
+                f"sample_project_{project.id}.png",
+                ContentFile(plan_bytes),
+                save=True,
+            )
             run_pipeline(plan=plan, detector_name="mock")
             created += 1
-            self.stdout.write(self.style.SUCCESS(f"  + plano + modelo 3D para '{project.name}'"))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"  + plano + modelo 3D para '{project.name}'"
+                )
+            )
 
-        self.stdout.write(self.style.SUCCESS(f"seed_sample_plans: {created} generados."))
+        self.stdout.write(
+            self.style.SUCCESS(f"seed_sample_plans: {created} generados.")
+        )

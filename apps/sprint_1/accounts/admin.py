@@ -15,15 +15,34 @@ class UserAdmin(BaseUserAdmin):
         (None, {"fields": ("email", "password")}),
         ("Perfil", {"fields": ("full_name", "phone", "avatar")}),
         ("Suscripción", {"fields": ("subscription_plan",)}),
-        ("Rol y permisos", {
-            "fields": ("role", "is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
-        }),
+        (
+            "Rol y permisos",
+            {
+                "fields": (
+                    "role",
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
         ("Fechas", {"fields": ("last_login", "date_joined")}),
     )
     readonly_fields = ["date_joined", "last_login"]
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("email", "full_name", "role", "password1", "password2"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "email",
+                    "full_name",
+                    "role",
+                    "password1",
+                    "password2",
+                ),
+            },
+        ),
     )

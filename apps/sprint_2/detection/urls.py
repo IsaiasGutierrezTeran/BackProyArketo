@@ -8,7 +8,9 @@ from rest_framework.routers import DefaultRouter
 from .views import DetectionJobViewSet, RunDetectionView
 
 router = DefaultRouter()
-router.register("detection/jobs", DetectionJobViewSet, basename="detection-job")
+router.register(
+    "detection/jobs", DetectionJobViewSet, basename="detection-job"
+)
 
 urlpatterns = [
     path("detection/run", RunDetectionView.as_view(), name="detection-run"),

@@ -29,11 +29,15 @@ class Plan(BaseModel):
         "projects.Project", on_delete=models.CASCADE, related_name="plans"
     )
     uploaded_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="uploaded_plans",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="uploaded_plans",
     )
     file = models.FileField(upload_to="plans/")
-    original_format = models.CharField(max_length=8, choices=PlanFormat.choices)
+    original_format = models.CharField(
+        max_length=8, choices=PlanFormat.choices
+    )
     size_bytes = models.PositiveIntegerField(default=0)
     status = models.CharField(
         max_length=20, choices=PlanStatus.choices, default=PlanStatus.UPLOADED

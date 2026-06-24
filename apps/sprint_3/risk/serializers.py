@@ -20,11 +20,19 @@ class RiskAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = RiskAnalysis
         fields = [
-            "id", "model3d", "provider", "status", "summary", "findings", "created_at",
+            "id",
+            "model3d",
+            "provider",
+            "status",
+            "summary",
+            "findings",
+            "created_at",
         ]
         read_only_fields = fields
 
 
 class AnalyzeSerializer(serializers.Serializer):
     model3d = serializers.IntegerField(min_value=1)
-    analyzer = serializers.ChoiceField(choices=["mock", "gemini"], required=False, allow_null=True)
+    analyzer = serializers.ChoiceField(
+        choices=["mock", "gemini"], required=False, allow_null=True
+    )

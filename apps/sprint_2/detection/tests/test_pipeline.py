@@ -30,7 +30,9 @@ def test_run_pipeline_mock_creates_model(make_user, auth_client):
     client = auth_client(user)
 
     resp = client.post(
-        "/api/detection/run", {"plan": plan.id, "detector": "mock"}, format="json"
+        "/api/detection/run",
+        {"plan": plan.id, "detector": "mock"},
+        format="json",
     )
     assert resp.status_code == 201
     data = resp.json()["data"]
@@ -40,7 +42,10 @@ def test_run_pipeline_mock_creates_model(make_user, auth_client):
 
     plan.refresh_from_db()
     assert plan.status == PlanStatus.PROCESSED
-    assert Model3D.objects.filter(project=plan.project, is_current=True).count() == 1
+    assert (
+        Model3D.objects.filter(project=plan.project, is_current=True).count()
+        == 1
+    )
 
 
 def test_cannot_detect_others_plan(make_user, auth_client):

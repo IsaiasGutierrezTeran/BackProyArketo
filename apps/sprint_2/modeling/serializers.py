@@ -18,9 +18,18 @@ class Model3DSerializer(serializers.ModelSerializer):
     class Meta:
         model = Model3D
         fields = [
-            "id", "project", "source_plan", "glb_url", "scene_json", "bounds",
-            "element_count", "model_name", "unit", "is_current",
-            "created_at", "updated_at",
+            "id",
+            "project",
+            "source_plan",
+            "glb_url",
+            "scene_json",
+            "bounds",
+            "element_count",
+            "model_name",
+            "unit",
+            "is_current",
+            "created_at",
+            "updated_at",
         ]
         read_only_fields = fields
 

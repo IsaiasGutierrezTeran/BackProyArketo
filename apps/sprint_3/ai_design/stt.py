@@ -13,14 +13,18 @@ class TranscriberBase(ABC):
     name: str = "base"
 
     @abstractmethod
-    def transcribe(self, audio_bytes: bytes, *, filename: str = "audio") -> str:
+    def transcribe(
+        self, audio_bytes: bytes, *, filename: str = "audio"
+    ) -> str:
         raise NotImplementedError
 
 
 class MockTranscriber(TranscriberBase):
     name = "mock"
 
-    def transcribe(self, audio_bytes: bytes, *, filename: str = "audio") -> str:
+    def transcribe(
+        self, audio_bytes: bytes, *, filename: str = "audio"
+    ) -> str:
         # Deterministic transcript so the audio->design path works offline.
         return "Una casa de 6 por 4 metros con una puerta al frente."
 
@@ -28,19 +32,24 @@ class MockTranscriber(TranscriberBase):
 class GeminiTranscriber(TranscriberBase):
     name = "gemini"
 
-    def transcribe(self, audio_bytes: bytes, *, filename: str = "audio") -> str:
+    def transcribe(
+        self, audio_bytes: bytes, *, filename: str = "audio"
+    ) -> str:
         # Real audio transcription needs the Gemini Files API / multimodal upload;
         # left as a clear, explicit gap rather than fabricating a transcript.
         raise ApiException(
             "Transcripción Gemini aún no implementada; usa SPEECH_TO_TEXT_PROVIDER=mock.",
-            code="not_implemented", status_code=501,
+            code="not_implemented",
+            status_code=501,
         )
 
 
 class AwsTranscriber(TranscriberBase):
     name = "aws"
 
-    def transcribe(self, audio_bytes: bytes, *, filename: str = "audio") -> str:
+    def transcribe(
+        self, audio_bytes: bytes, *, filename: str = "audio"
+    ) -> str:
         # Real STT via AWS Transcribe (uses the EC2 instance role, no keys).
         from core.aws_ai import transcribe_audio
 

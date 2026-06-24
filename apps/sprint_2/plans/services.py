@@ -6,7 +6,11 @@ from django.db.models import QuerySet
 
 from core.exceptions import ApiException
 from projects.models import Project
-from projects.services import assert_can_edit_project, mark_project_active, projects_for
+from projects.services import (
+    assert_can_edit_project,
+    mark_project_active,
+    projects_for,
+)
 
 from .models import Plan
 from .validators import normalized_format

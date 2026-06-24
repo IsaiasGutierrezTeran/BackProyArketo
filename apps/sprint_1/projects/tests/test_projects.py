@@ -42,7 +42,9 @@ def test_cannot_edit_others_project(make_user, auth_client):
 
     client = auth_client(owner)
     # Not in owner's queryset -> 404 (not even visible)
-    resp = client.patch(f"/api/projects/{proj.id}/", {"name": "hijack"}, format="json")
+    resp = client.patch(
+        f"/api/projects/{proj.id}/", {"name": "hijack"}, format="json"
+    )
     assert resp.status_code == 404
 
 

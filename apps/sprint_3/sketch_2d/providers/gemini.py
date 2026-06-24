@@ -29,23 +29,39 @@ class GeminiSketchProvider(SketchProviderBase):
         if not key:
             raise ApiException(
                 "GEMINI_API_KEY no configurada; usa SKETCH_PROVIDER=mock.",
-                code="bad_request", status_code=400,
+                code="bad_request",
+                status_code=400,
             )
         body = {
-            "instances": [{"prompt": f"Plano arquitectónico 2D, vista en planta: {prompt}"}],
+            "instances": [
+                {
+                    "prompt": f"Plano arquitectónico 2D, vista en planta: {prompt}"
+                }
+            ],
             "parameters": {"sampleCount": 1},
         }
         try:
-            resp = requests.post(_IMAGEN_URL, params={"key": key}, json=body, timeout=90)
+            resp = requests.post(
+                _IMAGEN_URL, params={"key": key}, json=body, timeout=90
+            )
         except requests.RequestException as exc:
-            raise ApiException("No se pudo contactar el servicio de imágenes (Gemini).",
-                               code="inference_error", status_code=502) from exc
+            raise ApiException(
+                "No se pudo contactar el servicio de imágenes (Gemini).",
+                code="inference_error",
+                status_code=502,
+            ) from exc
         if resp.status_code != 200:
-            raise ApiException(f"El servicio de imágenes respondió {resp.status_code}.",
-                               code="inference_error", status_code=502)
+            raise ApiException(
+                f"El servicio de imágenes respondió {resp.status_code}.",
+                code="inference_error",
+                status_code=502,
+            )
         try:
             b64 = resp.json()["predictions"][0]["bytesBase64Encoded"]
             return base64.b64decode(b64)
         except (KeyError, IndexError, ValueError) as exc:
-            raise ApiException("Respuesta inesperada del servicio de imágenes.",
-                               code="inference_error", status_code=502) from exc
+            raise ApiException(
+                "Respuesta inesperada del servicio de imágenes.",
+                code="inference_error",
+                status_code=502,
+            ) from exc

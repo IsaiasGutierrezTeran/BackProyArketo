@@ -14,7 +14,13 @@ pytestmark = pytest.mark.django_db
 
 SCENE = {
     "walls": [
-        {"id": "w1", "start": {"x": 0, "y": 0}, "end": {"x": 3, "y": 0}, "thickness": 0.15, "height": 2.7},
+        {
+            "id": "w1",
+            "start": {"x": 0, "y": 0},
+            "end": {"x": 3, "y": 0},
+            "thickness": 0.15,
+            "height": 2.7,
+        },
     ],
     "doors": [],
     "windows": [],
@@ -42,10 +48,22 @@ def test_edit_scene_regenerates_glb(make_user, auth_client):
     user = make_user(role=Role.ARQUITECTO)
     model = _model(user)
     client = auth_client(user)
-    new_scene = {**SCENE, "walls": SCENE["walls"] + [
-        {"id": "w2", "start": {"x": 3, "y": 0}, "end": {"x": 3, "y": 3}, "thickness": 0.15, "height": 2.7},
-    ]}
-    resp = client.patch(f"/api/models3d/{model.id}/scene/", {"scene": new_scene}, format="json")
+    new_scene = {
+        **SCENE,
+        "walls": SCENE["walls"]
+        + [
+            {
+                "id": "w2",
+                "start": {"x": 3, "y": 0},
+                "end": {"x": 3, "y": 3},
+                "thickness": 0.15,
+                "height": 2.7,
+            },
+        ],
+    }
+    resp = client.patch(
+        f"/api/models3d/{model.id}/scene/", {"scene": new_scene}, format="json"
+    )
     assert resp.status_code == 200
     assert resp.json()["data"]["element_count"] == 2
 
@@ -66,7 +84,9 @@ def test_plan_png_renders_image(make_user, auth_client):
     resp = client.get(f"/api/models3d/{model.id}/plan.png")
     assert resp.status_code == 200
     assert resp["Content-Type"] == "image/png"
-    assert resp.content[:4] == b"\x89PNG"  # raw bytes, NOT wrapped in the envelope
+    assert (
+        resp.content[:4] == b"\x89PNG"
+    )  # raw bytes, NOT wrapped in the envelope
 
 
 def test_plan_pdf_downloads_attachment(make_user, auth_client):
@@ -76,7 +96,10 @@ def test_plan_pdf_downloads_attachment(make_user, auth_client):
     resp = client.get(f"/api/models3d/{model.id}/plan.pdf")
     assert resp.status_code == 200
     assert resp["Content-Type"] == "application/pdf"
-    assert resp["Content-Disposition"] == f'attachment; filename="plano_{model.id}.pdf"'
+    assert (
+        resp["Content-Disposition"]
+        == f'attachment; filename="plano_{model.id}.pdf"'
+    )
     assert resp.content[:4] == b"%PDF"
 
 
@@ -100,9 +123,13 @@ def test_import_glb(make_user, auth_client):
     user = make_user(role=Role.ARQUITECTO)
     project = Project.objects.create(owner=user, name="P")
     client = auth_client(user)
-    glb = SimpleUploadedFile("m.glb", b"glTF\x02\x00\x00\x00rest", content_type="model/gltf-binary")
+    glb = SimpleUploadedFile(
+        "m.glb", b"glTF\x02\x00\x00\x00rest", content_type="model/gltf-binary"
+    )
     resp = client.post(
-        "/api/models3d/import/", {"project": project.id, "file": glb}, format="multipart"
+        "/api/models3d/import/",
+        {"project": project.id, "file": glb},
+        format="multipart",
     )
     assert resp.status_code == 201
     assert Model3D.objects.filter(project=project).count() == 1

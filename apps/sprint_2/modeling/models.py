@@ -12,8 +12,11 @@ class Model3D(BaseModel):
         "projects.Project", on_delete=models.CASCADE, related_name="models3d"
     )
     source_plan = models.ForeignKey(
-        "plans.Plan", on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="models3d",
+        "plans.Plan",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="models3d",
     )
     glb_file = models.FileField(upload_to="models3d/")
     # Editable geometry (walls/doors/windows) — the source of truth for re-export.

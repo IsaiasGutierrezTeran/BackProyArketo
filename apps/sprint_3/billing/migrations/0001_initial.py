@@ -15,40 +15,113 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='SubscriptionPlan',
+            name="SubscriptionPlan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('code', models.SlugField(max_length=40, unique=True)),
-                ('name', models.CharField(max_length=80)),
-                ('price', models.DecimalField(decimal_places=2, default=0, max_digits=10)),
-                ('interval', models.CharField(choices=[('month', 'Mensual'), ('year', 'Anual')], default='month', max_length=8)),
-                ('features', models.JSONField(blank=True, default=list)),
-                ('stripe_price_id', models.CharField(blank=True, max_length=120)),
-                ('is_active', models.BooleanField(default=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("code", models.SlugField(max_length=40, unique=True)),
+                ("name", models.CharField(max_length=80)),
+                (
+                    "price",
+                    models.DecimalField(
+                        decimal_places=2, default=0, max_digits=10
+                    ),
+                ),
+                (
+                    "interval",
+                    models.CharField(
+                        choices=[("month", "Mensual"), ("year", "Anual")],
+                        default="month",
+                        max_length=8,
+                    ),
+                ),
+                ("features", models.JSONField(blank=True, default=list)),
+                (
+                    "stripe_price_id",
+                    models.CharField(blank=True, max_length=120),
+                ),
+                ("is_active", models.BooleanField(default=True)),
             ],
             options={
-                'ordering': ['price'],
-                'abstract': False,
+                "ordering": ["price"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Subscription',
+            name="Subscription",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('status', models.CharField(choices=[('active', 'Activa'), ('incomplete', 'Pendiente de pago'), ('past_due', 'Vencida'), ('canceled', 'Cancelada')], default='incomplete', max_length=12)),
-                ('stripe_customer_id', models.CharField(blank=True, max_length=120)),
-                ('stripe_subscription_id', models.CharField(blank=True, max_length=120)),
-                ('current_period_end', models.DateTimeField(blank=True, null=True)),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='subscription', to=settings.AUTH_USER_MODEL)),
-                ('plan', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='subscriptions', to='billing.subscriptionplan')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("active", "Activa"),
+                            ("incomplete", "Pendiente de pago"),
+                            ("past_due", "Vencida"),
+                            ("canceled", "Cancelada"),
+                        ],
+                        default="incomplete",
+                        max_length=12,
+                    ),
+                ),
+                (
+                    "stripe_customer_id",
+                    models.CharField(blank=True, max_length=120),
+                ),
+                (
+                    "stripe_subscription_id",
+                    models.CharField(blank=True, max_length=120),
+                ),
+                (
+                    "current_period_end",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subscription",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "plan",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="subscriptions",
+                        to="billing.subscriptionplan",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
+                "ordering": ["-created_at"],
+                "abstract": False,
             },
         ),
     ]

@@ -30,7 +30,11 @@ class PlanViewSet(
     parser_classes = [MultiPartParser, FormParser]
 
     def get_permissions(self):
-        return [IsArquitecto()] if self.action in _DESIGN_ACTIONS else [IsAuthenticated()]
+        return (
+            [IsArquitecto()]
+            if self.action in _DESIGN_ACTIONS
+            else [IsAuthenticated()]
+        )
 
     def get_queryset(self):
         user = getattr(self.request, "user", None)
@@ -41,7 +45,9 @@ class PlanViewSet(
         return qs.filter(project=project) if project else qs
 
     def get_serializer_class(self):
-        return PlanUploadSerializer if self.action == "create" else PlanSerializer
+        return (
+            PlanUploadSerializer if self.action == "create" else PlanSerializer
+        )
 
     @extend_schema(
         request=PlanUploadSerializer,
@@ -49,9 +55,13 @@ class PlanViewSet(
         summary="Subir un plano (PDF/JPG/PNG/CSV) a un proyecto",
     )
     def create(self, request, *args, **kwargs):
-        serializer = PlanUploadSerializer(data=request.data, context={"request": request})
+        serializer = PlanUploadSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
-        plan = services.create_plan(user=request.user, **serializer.validated_data)
+        plan = services.create_plan(
+            user=request.user, **serializer.validated_data
+        )
         return Response(
             PlanSerializer(plan, context={"request": request}).data,
             status=status.HTTP_201_CREATED,

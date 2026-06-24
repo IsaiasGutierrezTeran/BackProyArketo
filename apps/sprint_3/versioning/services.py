@@ -35,12 +35,19 @@ def commit_version(*, user, project_id: int, message: str) -> ProjectVersion:
     """Save a new version (commit) of the project's current state."""
     project = projects_for(user).filter(pk=project_id).first()
     if project is None:
-        raise ApiException("Proyecto no encontrado.", code="not_found", status_code=404)
+        raise ApiException(
+            "Proyecto no encontrado.", code="not_found", status_code=404
+        )
     assert_can_edit_project(user, project)
-    next_number = (project.versions.aggregate(m=Max("version_number"))["m"] or 0) + 1
+    next_number = (
+        project.versions.aggregate(m=Max("version_number"))["m"] or 0
+    ) + 1
     return ProjectVersion.objects.create(
-        project=project, author=user, version_number=next_number,
-        message=message, snapshot=_snapshot(project),
+        project=project,
+        author=user,
+        version_number=next_number,
+        message=message,
+        snapshot=_snapshot(project),
     )
 
 
@@ -49,7 +56,9 @@ def restore_version(*, user, version: ProjectVersion) -> ProjectVersion:
     """Restore each model's geometry from the snapshot and regenerate its GLB."""
     assert_can_edit_project(user, version.project)
     for entry in (version.snapshot or {}).get("models", []):
-        model = Model3D.objects.filter(pk=entry["id"], project=version.project).first()
+        model = Model3D.objects.filter(
+            pk=entry["id"], project=version.project
+        ).first()
         if model is not None and entry.get("scene_json"):
             replace_scene(model=model, scene_json=entry["scene_json"])
     return version
@@ -67,7 +76,9 @@ def diff_versions(*, base: ProjectVersion, target: ProjectVersion) -> dict:
     modified / unchanged between ``base`` and ``target``, plus element counts.
     """
     base_models = {m["id"]: m for m in (base.snapshot or {}).get("models", [])}
-    target_models = {m["id"]: m for m in (target.snapshot or {}).get("models", [])}
+    target_models = {
+        m["id"]: m for m in (target.snapshot or {}).get("models", [])
+    }
     model_diffs = []
     for mid in sorted(set(base_models) | set(target_models)):
         b, t = base_models.get(mid), target_models.get(mid)
@@ -79,15 +90,23 @@ def diff_versions(*, base: ProjectVersion, target: ProjectVersion) -> dict:
             change = "modified"
         else:
             change = "unchanged"
-        model_diffs.append({
-            "model_id": mid,
-            "change": change,
-            "from_counts": _scene_counts(b.get("scene_json")) if b else None,
-            "to_counts": _scene_counts(t.get("scene_json")) if t else None,
-        })
+        model_diffs.append(
+            {
+                "model_id": mid,
+                "change": change,
+                "from_counts": (
+                    _scene_counts(b.get("scene_json")) if b else None
+                ),
+                "to_counts": _scene_counts(t.get("scene_json")) if t else None,
+            }
+        )
 
-    base_budgets = {x["id"]: x for x in (base.snapshot or {}).get("budgets", [])}
-    target_budgets = {x["id"]: x for x in (target.snapshot or {}).get("budgets", [])}
+    base_budgets = {
+        x["id"]: x for x in (base.snapshot or {}).get("budgets", [])
+    }
+    target_budgets = {
+        x["id"]: x for x in (target.snapshot or {}).get("budgets", [])
+    }
     budget_diffs = []
     for bid in sorted(set(base_budgets) | set(target_budgets)):
         b, t = base_budgets.get(bid), target_budgets.get(bid)
@@ -99,14 +118,16 @@ def diff_versions(*, base: ProjectVersion, target: ProjectVersion) -> dict:
             change = "modified"
         else:
             change = "unchanged"
-        budget_diffs.append({
-            "budget_id": bid,
-            "change": change,
-            "from_total": (b or {}).get("total"),
-            "to_total": (t or {}).get("total"),
-            "from_status": (b or {}).get("status"),
-            "to_status": (t or {}).get("status"),
-        })
+        budget_diffs.append(
+            {
+                "budget_id": bid,
+                "change": change,
+                "from_total": (b or {}).get("total"),
+                "to_total": (t or {}).get("total"),
+                "from_status": (b or {}).get("status"),
+                "to_status": (t or {}).get("status"),
+            }
+        )
 
     return {
         "project": base.project_id,

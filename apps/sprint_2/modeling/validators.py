@@ -12,7 +12,9 @@ def validate_scene(scene: object) -> dict:
     if not isinstance(scene, dict):
         raise serializers.ValidationError("La escena debe ser un objeto JSON.")
     if not isinstance(scene.get("walls"), list):
-        raise serializers.ValidationError("La escena debe incluir una lista 'walls'.")
+        raise serializers.ValidationError(
+            "La escena debe incluir una lista 'walls'."
+        )
     return scene
 
 

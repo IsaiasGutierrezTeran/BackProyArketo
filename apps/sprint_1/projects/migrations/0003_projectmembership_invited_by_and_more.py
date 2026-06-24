@@ -8,19 +8,29 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('projects', '0002_comment_projectmembership'),
+        ("projects", "0002_comment_projectmembership"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='projectmembership',
-            name='invited_by',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='sent_invitations', to=settings.AUTH_USER_MODEL),
+            model_name="projectmembership",
+            name="invited_by",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.SET_NULL,
+                related_name="sent_invitations",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='projectmembership',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pendiente'), ('accepted', 'Aceptada')], default='accepted', max_length=10),
+            model_name="projectmembership",
+            name="status",
+            field=models.CharField(
+                choices=[("pending", "Pendiente"), ("accepted", "Aceptada")],
+                default="accepted",
+                max_length=10,
+            ),
         ),
     ]

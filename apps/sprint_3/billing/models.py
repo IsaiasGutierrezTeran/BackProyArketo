@@ -18,7 +18,9 @@ class SubscriptionPlan(BaseModel):
     name = models.CharField(max_length=80)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     interval = models.CharField(
-        max_length=8, choices=BillingInterval.choices, default=BillingInterval.MONTH
+        max_length=8,
+        choices=BillingInterval.choices,
+        default=BillingInterval.MONTH,
     )
     features = models.JSONField(default=list, blank=True)
     stripe_price_id = models.CharField(max_length=120, blank=True)
@@ -40,13 +42,20 @@ class SubscriptionStatus(models.TextChoices):
 
 class Subscription(BaseModel):
     user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscription"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="subscription",
     )
     plan = models.ForeignKey(
-        SubscriptionPlan, on_delete=models.SET_NULL, null=True, related_name="subscriptions"
+        SubscriptionPlan,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="subscriptions",
     )
     status = models.CharField(
-        max_length=12, choices=SubscriptionStatus.choices, default=SubscriptionStatus.INCOMPLETE
+        max_length=12,
+        choices=SubscriptionStatus.choices,
+        default=SubscriptionStatus.INCOMPLETE,
     )
     stripe_customer_id = models.CharField(max_length=120, blank=True)
     stripe_subscription_id = models.CharField(max_length=120, blank=True)

@@ -37,7 +37,9 @@ class RunDetectionView(APIView):
 
         plan = plans_for(request.user).filter(pk=payload["plan"]).first()
         if plan is None:
-            raise ApiException("Plano no encontrado.", code="not_found", status_code=404)
+            raise ApiException(
+                "Plano no encontrado.", code="not_found", status_code=404
+            )
         assert_can_edit_project(request.user, plan.project)
 
         # Plan de suscripción: Free solo puede usar el detector mock.
@@ -45,7 +47,8 @@ class RunDetectionView(APIView):
         if detector and detector not in allowed_detectors(request.user):
             raise ApiException(
                 "Ese detector requiere el plan Pro. Tu plan solo permite la detección mock.",
-                code="forbidden", status_code=403,
+                code="forbidden",
+                status_code=403,
             )
 
         options = {

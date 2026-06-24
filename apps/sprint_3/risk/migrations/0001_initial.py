@@ -10,43 +10,108 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('modeling', '0002_initial'),
+        ("modeling", "0002_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='RiskAnalysis',
+            name="RiskAnalysis",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('provider', models.CharField(blank=True, max_length=20)),
-                ('status', models.CharField(choices=[('completed', 'Completado'), ('failed', 'Fallido')], default='completed', max_length=12)),
-                ('summary', models.TextField(blank=True)),
-                ('model3d', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='risk_analyses', to='modeling.model3d')),
-                ('requested_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='risk_analyses', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("provider", models.CharField(blank=True, max_length=20)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("completed", "Completado"),
+                            ("failed", "Fallido"),
+                        ],
+                        default="completed",
+                        max_length=12,
+                    ),
+                ),
+                ("summary", models.TextField(blank=True)),
+                (
+                    "model3d",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="risk_analyses",
+                        to="modeling.model3d",
+                    ),
+                ),
+                (
+                    "requested_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="risk_analyses",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
+                "ordering": ["-created_at"],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='RiskFinding',
+            name="RiskFinding",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('category', models.CharField(max_length=60)),
-                ('severity', models.CharField(choices=[('low', 'Baja'), ('medium', 'Media'), ('high', 'Alta'), ('critical', 'Crítica')], max_length=12)),
-                ('description', models.TextField()),
-                ('suggestion', models.TextField(blank=True)),
-                ('analysis', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='findings', to='risk.riskanalysis')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("category", models.CharField(max_length=60)),
+                (
+                    "severity",
+                    models.CharField(
+                        choices=[
+                            ("low", "Baja"),
+                            ("medium", "Media"),
+                            ("high", "Alta"),
+                            ("critical", "Crítica"),
+                        ],
+                        max_length=12,
+                    ),
+                ),
+                ("description", models.TextField()),
+                ("suggestion", models.TextField(blank=True)),
+                (
+                    "analysis",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="findings",
+                        to="risk.riskanalysis",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-severity', '-created_at'],
-                'abstract': False,
+                "ordering": ["-severity", "-created_at"],
+                "abstract": False,
             },
         ),
     ]

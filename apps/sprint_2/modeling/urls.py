@@ -18,7 +18,15 @@ _plan_png = Model3DViewSet.as_view({"get": "plan_png"})
 _plan_pdf = Model3DViewSet.as_view({"get": "plan_pdf"})
 
 urlpatterns = [
-    re_path(r"^models3d/(?P<pk>[^/.]+)/plan\.png$", _plan_png, name="model3d-plan-png"),
-    re_path(r"^models3d/(?P<pk>[^/.]+)/plan\.pdf$", _plan_pdf, name="model3d-plan-pdf"),
+    re_path(
+        r"^models3d/(?P<pk>[^/.]+)/plan\.png$",
+        _plan_png,
+        name="model3d-plan-png",
+    ),
+    re_path(
+        r"^models3d/(?P<pk>[^/.]+)/plan\.pdf$",
+        _plan_pdf,
+        name="model3d-plan-pdf",
+    ),
     *router.urls,
 ]

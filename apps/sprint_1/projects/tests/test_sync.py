@@ -34,4 +34,7 @@ def test_sync_returns_changes_then_empty_delta(make_user, auth_client):
 
 def test_sync_rejects_invalid_since(make_user, auth_client):
     client = auth_client(make_user())
-    assert client.get("/api/projects/sync/", {"since": "not-a-date"}).status_code == 400
+    assert (
+        client.get("/api/projects/sync/", {"since": "not-a-date"}).status_code
+        == 400
+    )

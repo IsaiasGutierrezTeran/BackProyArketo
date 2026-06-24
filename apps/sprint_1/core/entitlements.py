@@ -56,5 +56,6 @@ def requires_plan(user, minimum: str, feature: str = "Esta función") -> None:
         raise ApiException(
             f"{feature} requiere el plan {_PLAN_LABEL.get(minimum, minimum)} o superior. "
             "Mejora tu suscripción.",
-            code="forbidden", status_code=403,
+            code="forbidden",
+            status_code=403,
         )

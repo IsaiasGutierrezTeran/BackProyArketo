@@ -17,8 +17,14 @@ User = get_user_model()
 _SELF_REGISTER_ROLES = {Role.CLIENTE, Role.ARQUITECTO, Role.INGENIERO}
 
 
-def register_user(*, email: str, password: str, full_name: str = "", phone: str = "",
-                  role: str = Role.CLIENTE) -> "User":
+def register_user(
+    *,
+    email: str,
+    password: str,
+    full_name: str = "",
+    phone: str = "",
+    role: str = Role.CLIENTE,
+) -> "User":
     """Self-registration. El rol se limita a cliente/arquitecto/ingeniero (nunca superadmin)."""
     if role not in _SELF_REGISTER_ROLES:
         role = Role.CLIENTE
@@ -41,7 +47,9 @@ def update_profile(user: "User", **fields) -> "User":
     return user
 
 
-def change_password(user: "User", *, current_password: str, new_password: str) -> "User":
+def change_password(
+    user: "User", *, current_password: str, new_password: str
+) -> "User":
     """Set a new password for the caller (current already verified in serializer)."""
     user.set_password(new_password)
     user.save(update_fields=["password"])
@@ -51,7 +59,9 @@ def change_password(user: "User", *, current_password: str, new_password: str) -
 def logout(refresh_token: str) -> None:
     """Blacklist a refresh token so it can no longer be rotated/used."""
     if not refresh_token:
-        raise ApiException("El campo 'refresh' es obligatorio.", code="bad_request")
+        raise ApiException(
+            "El campo 'refresh' es obligatorio.", code="bad_request"
+        )
     try:
         RefreshToken(refresh_token).blacklist()
     except TokenError as exc:
@@ -73,7 +83,9 @@ def admin_create_user(*, password: str | None = None, **fields) -> "User":
     return user
 
 
-def admin_update_user(user: "User", *, password: str | None = None, **fields) -> "User":
+def admin_update_user(
+    user: "User", *, password: str | None = None, **fields
+) -> "User":
     """Superadmin updates a user (optionally resetting the password)."""
     for key, value in fields.items():
         setattr(user, key, value)

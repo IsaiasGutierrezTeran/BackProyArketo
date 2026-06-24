@@ -10,27 +10,58 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('projects', '0002_comment_projectmembership'),
+        ("projects", "0002_comment_projectmembership"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ProjectVersion',
+            name="ProjectVersion",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('version_number', models.PositiveIntegerField()),
-                ('message', models.TextField(blank=True)),
-                ('snapshot', models.JSONField(default=dict)),
-                ('author', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='project_versions', to=settings.AUTH_USER_MODEL)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='versions', to='projects.project')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("version_number", models.PositiveIntegerField()),
+                ("message", models.TextField(blank=True)),
+                ("snapshot", models.JSONField(default=dict)),
+                (
+                    "author",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="project_versions",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="versions",
+                        to="projects.project",
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-version_number'],
-                'abstract': False,
-                'constraints': [models.UniqueConstraint(fields=('project', 'version_number'), name='uniq_project_version')],
+                "ordering": ["-version_number"],
+                "abstract": False,
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("project", "version_number"),
+                        name="uniq_project_version",
+                    )
+                ],
             },
         ),
     ]

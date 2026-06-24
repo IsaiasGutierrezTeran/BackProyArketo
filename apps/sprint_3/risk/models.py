@@ -22,15 +22,21 @@ class Severity(models.TextChoices):
 
 class RiskAnalysis(BaseModel):
     model3d = models.ForeignKey(
-        "modeling.Model3D", on_delete=models.CASCADE, related_name="risk_analyses"
+        "modeling.Model3D",
+        on_delete=models.CASCADE,
+        related_name="risk_analyses",
     )
     requested_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="risk_analyses",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="risk_analyses",
     )
     provider = models.CharField(max_length=20, blank=True)
     status = models.CharField(
-        max_length=12, choices=AnalysisStatus.choices, default=AnalysisStatus.COMPLETED
+        max_length=12,
+        choices=AnalysisStatus.choices,
+        default=AnalysisStatus.COMPLETED,
     )
     summary = models.TextField(blank=True)
 

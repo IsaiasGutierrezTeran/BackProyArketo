@@ -10,28 +10,82 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('projects', '0001_initial'),
+        ("projects", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Plan',
+            name="Plan",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('file', models.FileField(upload_to='plans/')),
-                ('original_format', models.CharField(choices=[('pdf', 'PDF'), ('jpg', 'JPG'), ('png', 'PNG'), ('csv', 'CSV')], max_length=8)),
-                ('size_bytes', models.PositiveIntegerField(default=0)),
-                ('status', models.CharField(choices=[('uploaded', 'Subido'), ('processing', 'Procesando'), ('processed', 'Procesado'), ('failed', 'Fallido')], default='uploaded', max_length=20)),
-                ('project', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='plans', to='projects.project')),
-                ('uploaded_by', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='uploaded_plans', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("file", models.FileField(upload_to="plans/")),
+                (
+                    "original_format",
+                    models.CharField(
+                        choices=[
+                            ("pdf", "PDF"),
+                            ("jpg", "JPG"),
+                            ("png", "PNG"),
+                            ("csv", "CSV"),
+                        ],
+                        max_length=8,
+                    ),
+                ),
+                ("size_bytes", models.PositiveIntegerField(default=0)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("uploaded", "Subido"),
+                            ("processing", "Procesando"),
+                            ("processed", "Procesado"),
+                            ("failed", "Fallido"),
+                        ],
+                        default="uploaded",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "project",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="plans",
+                        to="projects.project",
+                    ),
+                ),
+                (
+                    "uploaded_by",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="uploaded_plans",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
-                'indexes': [models.Index(fields=['project', 'status'], name='plans_plan_project_0d8a3e_idx')],
+                "ordering": ["-created_at"],
+                "abstract": False,
+                "indexes": [
+                    models.Index(
+                        fields=["project", "status"],
+                        name="plans_plan_project_0d8a3e_idx",
+                    )
+                ],
             },
         ),
     ]

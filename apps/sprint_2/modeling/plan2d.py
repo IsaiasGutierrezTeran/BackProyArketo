@@ -43,22 +43,22 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 
 # --- Canvas / layout (px) --------------------------------------------------
-_CANVAS = 1654          # PNG drawing area (A-ish landscape proportions)
+_CANVAS = 1654  # PNG drawing area (A-ish landscape proportions)
 _CANVAS_H = 1169
-_MARGIN = 150           # white border + room for the drawing frame
-_MIN_THICKNESS_PX = 4   # walls are never thinner than this on screen
+_MARGIN = 150  # white border + room for the drawing frame
+_MIN_THICKNESS_PX = 4  # walls are never thinner than this on screen
 _MAX_THICKNESS_PX = 40  # ...nor absurdly thick when the scene is tiny
 
 # --- Black & white technical palette ---------------------------------------
 _BG = (255, 255, 255)
-_INK = (0, 0, 0)              # everything is black: technical line drawing
+_INK = (0, 0, 0)  # everything is black: technical line drawing
 _HATCH = (0, 0, 0)
-_DIM = (0, 0, 0)             # dimension lines
-_GREY = (110, 110, 110)      # secondary text only (never on geometry)
+_DIM = (0, 0, 0)  # dimension lines
+_GREY = (110, 110, 110)  # secondary text only (never on geometry)
 
 # --- PDF page (landscape A4 @ 150 DPI) -------------------------------------
 _PDF_DPI = 150
-_A4_LANDSCAPE_PX = (1754, 1240)   # 297 x 210 mm @ 150 DPI
+_A4_LANDSCAPE_PX = (1754, 1240)  # 297 x 210 mm @ 150 DPI
 
 
 # --------------------------------------------------------------------------- #
@@ -123,8 +123,12 @@ def _bounds(scene_json):
     geometry's own extents when it's missing or unusable.
     """
     raw = (scene_json or {}).get("bounds") or {}
-    bx = (_num(raw.get("min_x")), _num(raw.get("min_y")),
-          _num(raw.get("max_x")), _num(raw.get("max_y")))
+    bx = (
+        _num(raw.get("min_x")),
+        _num(raw.get("min_y")),
+        _num(raw.get("max_x")),
+        _num(raw.get("max_y")),
+    )
     have_raw = any(k in raw for k in ("min_x", "min_y", "max_x", "max_y"))
 
     pts = _collect_points(scene_json)
@@ -153,8 +157,14 @@ def _bounds(scene_json):
 def _font(size):
     """A TrueType font at *size*, falling back to PIL's default bitmap font."""
     size = int(max(8, size))
-    for name in ("arial.ttf", "Arial.ttf", "DejaVuSans.ttf",
-                 "LiberationSans-Regular.ttf", "segoeui.ttf", "Helvetica.ttf"):
+    for name in (
+        "arial.ttf",
+        "Arial.ttf",
+        "DejaVuSans.ttf",
+        "LiberationSans-Regular.ttf",
+        "segoeui.ttf",
+        "Helvetica.ttf",
+    ):
         try:
             return ImageFont.truetype(name, size)
         except (OSError, IOError):
@@ -168,8 +178,13 @@ def _font(size):
 def _font_bold(size):
     """A bold TrueType font at *size* (falls back to the regular face)."""
     size = int(max(8, size))
-    for name in ("arialbd.ttf", "Arial-Bold.ttf", "DejaVuSans-Bold.ttf",
-                 "LiberationSans-Bold.ttf", "segoeuib.ttf"):
+    for name in (
+        "arialbd.ttf",
+        "Arial-Bold.ttf",
+        "DejaVuSans-Bold.ttf",
+        "LiberationSans-Bold.ttf",
+        "segoeuib.ttf",
+    ):
         try:
             return ImageFont.truetype(name, size)
         except (OSError, IOError):
@@ -220,8 +235,11 @@ def _draw_frame(draw, size, inset=40):
     """The technical drawing border (double rule)."""
     w, h = size
     draw.rectangle([inset, inset, w - inset, h - inset], outline=_INK, width=3)
-    draw.rectangle([inset + 8, inset + 8, w - inset - 8, h - inset - 8],
-                   outline=_INK, width=1)
+    draw.rectangle(
+        [inset + 8, inset + 8, w - inset - 8, h - inset - 8],
+        outline=_INK,
+        width=1,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -305,8 +323,10 @@ def _opening_axis(scene_json, project, pos):
 
 def _wall_px(thickness_m, scale):
     """A wall thickness in meters mapped to a clamped on-screen pixel width."""
-    return max(_MIN_THICKNESS_PX,
-               min(_MAX_THICKNESS_PX, (thickness_m or 0.12) * scale))
+    return max(
+        _MIN_THICKNESS_PX,
+        min(_MAX_THICKNESS_PX, (thickness_m or 0.12) * scale),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -347,8 +367,11 @@ def _draw_wall(draw, p1, p2, thickness_px):
     if length > 1e-9:
         ux, uy = dx / length, dy / length
         ext = thickness_px / 2.0
-        cap = _rect_polygon((x1 - ux * ext, y1 - uy * ext),
-                            (x2 + ux * ext, y2 + uy * ext), thickness_px)
+        cap = _rect_polygon(
+            (x1 - ux * ext, y1 - uy * ext),
+            (x2 + ux * ext, y2 + uy * ext),
+            thickness_px,
+        )
         if cap is not None:
             draw.polygon(cap, fill=_INK, outline=_INK)
 
@@ -376,9 +399,14 @@ def _draw_door(draw, scene_json, project, scale, door, fallback_t_px):
 
     # Jamb ticks across the wall at each side of the opening (thin black lines).
     for jp in (p1, p2):
-        draw.line([(jp[0] + nx * t_px / 2.0, jp[1] + ny * t_px / 2.0),
-                   (jp[0] - nx * t_px / 2.0, jp[1] - ny * t_px / 2.0)],
-                  fill=_INK, width=2)
+        draw.line(
+            [
+                (jp[0] + nx * t_px / 2.0, jp[1] + ny * t_px / 2.0),
+                (jp[0] - nx * t_px / 2.0, jp[1] - ny * t_px / 2.0),
+            ],
+            fill=_INK,
+            width=2,
+        )
 
     # Door leaf: from one jamb (p1) swinging out along the normal.
     leaf_len = 2 * half
@@ -386,12 +414,18 @@ def _draw_door(draw, scene_json, project, scale, door, fallback_t_px):
     draw.line([p1, leaf_end], fill=_INK, width=2)
 
     # 90-degree swing arc from the open leaf round to the closed position.
-    bbox = [p1[0] - leaf_len, p1[1] - leaf_len,
-            p1[0] + leaf_len, p1[1] + leaf_len]
+    bbox = [
+        p1[0] - leaf_len,
+        p1[1] - leaf_len,
+        p1[0] + leaf_len,
+        p1[1] + leaf_len,
+    ]
     a_open = math.degrees(math.atan2(ny, nx))
     a_closed = math.degrees(math.atan2(p2[1] - p1[1], p2[0] - p1[0]))
     diff = ((a_closed - a_open + 180) % 360) - 180
-    start, end = (a_open, a_open + diff) if diff >= 0 else (a_open + diff, a_open)
+    start, end = (
+        (a_open, a_open + diff) if diff >= 0 else (a_open + diff, a_open)
+    )
     try:
         draw.arc(bbox, start, end, fill=_INK, width=1)
     except Exception:  # pragma: no cover - degenerate bbox guard
@@ -427,9 +461,14 @@ def _draw_window(draw, scene_json, project, scale, window, fallback_t_px):
     draw.line([p1, p2], fill=_INK, width=1)  # centre line (the glass)
 
     for jp in (p1, p2):  # jamb caps across the band
-        draw.line([(jp[0] + nx * off, jp[1] + ny * off),
-                   (jp[0] - nx * off, jp[1] - ny * off)],
-                  fill=_INK, width=2)
+        draw.line(
+            [
+                (jp[0] + nx * off, jp[1] + ny * off),
+                (jp[0] - nx * off, jp[1] - ny * off),
+            ],
+            fill=_INK,
+            width=2,
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -445,7 +484,9 @@ def _draw_rooms(draw, scene_json, project, scale, name_font, area_font):
             w, h = _num(room.get("w")), _num(room.get("h"))
             area = w * h
         _text_centered(draw, cx, cy - 12, name, name_font, fill=_INK)
-        _text_centered(draw, cx, cy + 12, _fmt_area(area), area_font, fill=_INK)
+        _text_centered(
+            draw, cx, cy + 12, _fmt_area(area), area_font, fill=_INK
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -460,7 +501,9 @@ def _arrow_head(draw, tip, ang, size=9):
     draw.polygon([tip, p1, p2], fill=_DIM)
 
 
-def _dim_horizontal(draw, x1, x2, y, value_m, font, *, ext_from=None, flip=False):
+def _dim_horizontal(
+    draw, x1, x2, y, value_m, font, *, ext_from=None, flip=False
+):
     """A horizontal dimension line from x1 to x2 at screen height *y*.
 
     ``ext_from`` (a y) draws extension (witness) lines back to the geometry.
@@ -478,12 +521,15 @@ def _dim_horizontal(draw, x1, x2, y, value_m, font, *, ext_from=None, flip=False
     ty = y - h - 4 if not flip else y + 4
     # White backing so the number stays legible over lines.
     mx = (x1 + x2) / 2.0
-    draw.rectangle([mx - w / 2.0 - 3, ty - 2, mx + w / 2.0 + 3, ty + h + 2],
-                   fill=_BG)
+    draw.rectangle(
+        [mx - w / 2.0 - 3, ty - 2, mx + w / 2.0 + 3, ty + h + 2], fill=_BG
+    )
     draw.text((mx - w / 2.0, ty), label, fill=_DIM, font=font)
 
 
-def _dim_vertical(draw, y1, y2, x, value_m, font, *, ext_from=None, flip=False):
+def _dim_vertical(
+    draw, y1, y2, x, value_m, font, *, ext_from=None, flip=False
+):
     """A vertical dimension line from y1 to y2 at screen x position *x*."""
     if abs(y2 - y1) < 2:
         return
@@ -497,8 +543,9 @@ def _dim_vertical(draw, y1, y2, x, value_m, font, *, ext_from=None, flip=False):
     w, h = _text_size(draw, label, font)
     tx = x - w - 6 if not flip else x + 6
     my = (y1 + y2) / 2.0
-    draw.rectangle([tx - 3, my - h / 2.0 - 2, tx + w + 3, my + h / 2.0 + 2],
-                   fill=_BG)
+    draw.rectangle(
+        [tx - 3, my - h / 2.0 - 2, tx + w + 3, my + h / 2.0 + 2], fill=_BG
+    )
     draw.text((tx, my - h / 2.0), label, fill=_DIM, font=font)
 
 
@@ -507,34 +554,56 @@ def _draw_dimensions(draw, scene_json, bounds, project, scale, font):
     min_x, min_y, max_x, max_y = bounds
 
     # Screen corners of the bounding box (Y flipped).
-    tl = project(min_x, max_y)   # top-left on screen
-    br = project(max_x, min_y)   # bottom-right on screen
+    tl = project(min_x, max_y)  # top-left on screen
+    br = project(max_x, min_y)  # bottom-right on screen
     left_x, top_y = tl[0], tl[1]
     right_x, bot_y = br[0], br[1]
 
     gap = 46  # how far the cota sits outside the geometry
 
     # Overall WIDTH below the plan.
-    _dim_horizontal(draw, left_x, right_x, bot_y + gap, max_x - min_x, font,
-                    ext_from=bot_y, flip=True)
+    _dim_horizontal(
+        draw,
+        left_x,
+        right_x,
+        bot_y + gap,
+        max_x - min_x,
+        font,
+        ext_from=bot_y,
+        flip=True,
+    )
     # Overall HEIGHT (length) to the left of the plan.
-    _dim_vertical(draw, top_y, bot_y, left_x - gap, max_y - min_y, font,
-                  ext_from=left_x)
+    _dim_vertical(
+        draw, top_y, bot_y, left_x - gap, max_y - min_y, font, ext_from=left_x
+    )
 
     # Per-room cota: pick the largest room and dimension its width on top.
     rooms = _rooms(scene_json)
     if rooms:
-        main = max(rooms, key=lambda r: _num(r.get("area"),
-                                             _num(r.get("w")) * _num(r.get("h"))))
+        main = max(
+            rooms,
+            key=lambda r: _num(
+                r.get("area"), _num(r.get("w")) * _num(r.get("h"))
+            ),
+        )
         cx, cy = _num(main.get("x")), _num(main.get("y"))
         w, h = _num(main.get("w")), _num(main.get("h"))
         if w > 1e-6 and h > 1e-6:
             r_tl = project(cx - w / 2.0, cy + h / 2.0)
             r_br = project(cx + w / 2.0, cy - h / 2.0)
-            _dim_horizontal(draw, r_tl[0], r_br[0], top_y - gap, w, font,
-                            ext_from=top_y)
-            _dim_vertical(draw, r_tl[1], r_br[1], right_x + gap, h, font,
-                          flip=True, ext_from=right_x)
+            _dim_horizontal(
+                draw, r_tl[0], r_br[0], top_y - gap, w, font, ext_from=top_y
+            )
+            _dim_vertical(
+                draw,
+                r_tl[1],
+                r_br[1],
+                right_x + gap,
+                h,
+                font,
+                flip=True,
+                ext_from=right_x,
+            )
 
 
 # --------------------------------------------------------------------------- #
@@ -547,8 +616,8 @@ def _draw_north(draw, x, y, r, font):
     base_l = (x - r * 0.55, y + r * 0.35)
     base_r = (x + r * 0.55, y + r * 0.35)
     mid = (x, y)
-    draw.polygon([tip, base_l, mid], fill=_INK)            # filled half
-    draw.polygon([tip, base_r, mid], outline=_INK)         # hollow half
+    draw.polygon([tip, base_l, mid], fill=_INK)  # filled half
+    draw.polygon([tip, base_r, mid], outline=_INK)  # hollow half
     w, h = _text_size(draw, "N", font)
     draw.text((x - w / 2.0, y - r - 14 - h - 6), "N", fill=_INK, font=font)
 
@@ -580,12 +649,18 @@ def _draw_area_table(draw, scene_json, x, y, font, head_font):
     head_h = _text_size(draw, title, head_font)[1] + 12
 
     # Width: fit the longest name + area column.
-    name_w = max([_text_size(draw, r[0], font)[0] for r in rows] +
-                 [_text_size(draw, "AMBIENTE", font)[0]] +
-                 [_text_size(draw, "AREA TOTAL", font)[0]])
-    area_w = max([_text_size(draw, r[1], font)[0] for r in rows] +
-                 [_text_size(draw, "AREA", font)[0],
-                  _text_size(draw, _fmt_area(total), font)[0]])
+    name_w = max(
+        [_text_size(draw, r[0], font)[0] for r in rows]
+        + [_text_size(draw, "AMBIENTE", font)[0]]
+        + [_text_size(draw, "AREA TOTAL", font)[0]]
+    )
+    area_w = max(
+        [_text_size(draw, r[1], font)[0] for r in rows]
+        + [
+            _text_size(draw, "AREA", font)[0],
+            _text_size(draw, _fmt_area(total), font)[0],
+        ]
+    )
     pad = 14
     col_gap = 26
     tbl_w = pad * 2 + name_w + col_gap + area_w
@@ -642,14 +717,16 @@ def _render_plan(scene_json, canvas_w, canvas_h, margin, *, title=None):
     if title:
         font = _font_bold(max(26, canvas_h // 34))
         tw, th = _text_size(draw, title, font)
-        draw.text(((canvas_w - tw) / 2.0, margin // 2), title,
-                  fill=_INK, font=font)
+        draw.text(
+            ((canvas_w - tw) / 2.0, margin // 2), title, fill=_INK, font=font
+        )
         top_margin = margin + th + 10
 
     # Leave room around the geometry for cotas, table, north arrow.
     plan_margin = margin + 30
     project, scale = _make_projector(
-        bounds, canvas_w, canvas_h, plan_margin, top_margin)
+        bounds, canvas_w, canvas_h, plan_margin, top_margin
+    )
 
     # 1) Walls (solid black rectangles, real thickness).
     walls = _walls(scene_json)
@@ -664,8 +741,11 @@ def _render_plan(scene_json, canvas_w, canvas_h, margin, *, title=None):
     # A representative wall thickness drives opening fallbacks.
     if walls:
         rep_t = _wall_px(
-            sorted(_num(w.get("thickness"), 0.12) or 0.12 for w in walls)[len(walls) // 2],
-            scale)
+            sorted(_num(w.get("thickness"), 0.12) or 0.12 for w in walls)[
+                len(walls) // 2
+            ],
+            scale,
+        )
     else:
         rep_t = _MIN_THICKNESS_PX
 
@@ -688,9 +768,15 @@ def _render_plan(scene_json, canvas_w, canvas_h, margin, *, title=None):
     n_font = _font_bold(max(18, int(min(canvas_w, canvas_h) / 44)))
     nx = canvas_w - margin - 30
     ny = top_margin + 60
-    _draw_north(draw, nx, ny, max(20, int(min(canvas_w, canvas_h) / 44)), n_font)
-    _draw_scale_note(draw, nx - 70, ny + 60,
-                     _font(max(15, int(min(canvas_w, canvas_h) / 56))))
+    _draw_north(
+        draw, nx, ny, max(20, int(min(canvas_w, canvas_h) / 44)), n_font
+    )
+    _draw_scale_note(
+        draw,
+        nx - 70,
+        ny + 60,
+        _font(max(15, int(min(canvas_w, canvas_h) / 56))),
+    )
 
     # 6) Areas table (bottom-left), only when rooms are present.
     if _rooms(scene_json):
@@ -705,7 +791,9 @@ def _render_plan(scene_json, canvas_w, canvas_h, margin, *, title=None):
             tx = margin + 6
             ty = canvas_h - margin - tbl_h
             _draw_area_table(draw, scene_json, tx, ty, tbl_font, tbl_head)
-        except Exception:  # pragma: no cover - never let the table break the plan
+        except (
+            Exception
+        ):  # pragma: no cover - never let the table break the plan
             pass
 
     return img
@@ -780,8 +868,15 @@ def _pdf_with_reportlab(img: Image.Image, title: str):
         x = (page_w - draw_w) / 2.0
         y = (page_h - draw_h) / 2.0
 
-        c.drawImage(ImageReader(img), x, y, width=draw_w, height=draw_h,
-                    preserveAspectRatio=True, mask="auto")
+        c.drawImage(
+            ImageReader(img),
+            x,
+            y,
+            width=draw_w,
+            height=draw_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
         c.setTitle(title)
         c.showPage()
         c.save()

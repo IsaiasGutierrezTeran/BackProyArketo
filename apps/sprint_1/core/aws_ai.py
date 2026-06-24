@@ -21,7 +21,9 @@ from .exceptions import ApiException
 
 
 def _region() -> str:
-    return getattr(settings, "AWS_REGION", None) or getattr(settings, "AWS_S3_REGION_NAME", "us-east-1")
+    return getattr(settings, "AWS_REGION", None) or getattr(
+        settings, "AWS_S3_REGION_NAME", "us-east-1"
+    )
 
 
 def _client(service: str):
@@ -43,7 +45,11 @@ def bedrock_generate_text(
     (``anthropic_version: "bedrock-2023-05-31"``). Model id from
     ``settings.BEDROCK_MODEL_ID`` (e.g. a Claude Haiku 4.5 inference profile).
     """
-    model_id = getattr(settings, "BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+    model_id = getattr(
+        settings,
+        "BEDROCK_MODEL_ID",
+        "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    )
     body: dict = {
         "anthropic_version": "bedrock-2023-05-31",
         "max_tokens": max_tokens,
@@ -60,28 +66,38 @@ def bedrock_generate_text(
         # definitivo, así el fallback del proveedor responde casi al instante;
         # read_timeout amplio porque una generación real de Claude puede tardar.
         client = boto3.client(
-            "bedrock-runtime", region_name=_region(),
-            config=Config(retries={"max_attempts": 2, "mode": "standard"},
-                          connect_timeout=5, read_timeout=60),
+            "bedrock-runtime",
+            region_name=_region(),
+            config=Config(
+                retries={"max_attempts": 2, "mode": "standard"},
+                connect_timeout=5,
+                read_timeout=60,
+            ),
         )
         resp = client.invoke_model(modelId=model_id, body=json.dumps(body))
         payload = json.loads(resp["body"].read())
     except Exception as exc:  # boto3 ClientError, JSON, etc.
         raise ApiException(
             "No se pudo contactar el servicio de IA (AWS Bedrock).",
-            code="inference_error", status_code=502,
+            code="inference_error",
+            status_code=502,
         ) from exc
     blocks = payload.get("content", []) or []
-    text = "".join(b.get("text", "") for b in blocks if b.get("type") == "text")
+    text = "".join(
+        b.get("text", "") for b in blocks if b.get("type") == "text"
+    )
     if not text.strip():
         raise ApiException(
             "Respuesta vacía del servicio de IA (AWS Bedrock).",
-            code="inference_error", status_code=502,
+            code="inference_error",
+            status_code=502,
         )
     return text
 
 
-def transcribe_audio(audio_bytes: bytes, *, filename: str = "audio", timeout: float = 120.0) -> str:
+def transcribe_audio(
+    audio_bytes: bytes, *, filename: str = "audio", timeout: float = 120.0
+) -> str:
     """Transcribe audio with AWS Transcribe (async job + poll) and return text.
 
     Uploads the clip to the project S3 bucket, starts a transcription job that
@@ -92,13 +108,21 @@ def transcribe_audio(audio_bytes: bytes, *, filename: str = "audio", timeout: fl
     if not bucket:
         raise ApiException(
             "AWS_STORAGE_BUCKET_NAME es requerido para AWS Transcribe.",
-            code="bad_request", status_code=400,
+            code="bad_request",
+            status_code=400,
         )
     language = getattr(settings, "TRANSCRIBE_LANGUAGE", "es-US")
     ext = (filename.rsplit(".", 1)[-1] if "." in filename else "mp3").lower()
     media_format = {
-        "m4a": "mp4", "mp4": "mp4", "mp3": "mp3", "wav": "wav", "ogg": "ogg",
-        "oga": "ogg", "webm": "webm", "flac": "flac", "amr": "amr",
+        "m4a": "mp4",
+        "mp4": "mp4",
+        "mp3": "mp3",
+        "wav": "wav",
+        "ogg": "ogg",
+        "oga": "ogg",
+        "webm": "webm",
+        "flac": "flac",
+        "amr": "amr",
     }.get(ext, "mp3")
 
     job = f"arketo-stt-{uuid.uuid4().hex}"
@@ -128,16 +152,20 @@ def transcribe_audio(audio_bytes: bytes, *, filename: str = "audio", timeout: fl
         if status != "COMPLETED":
             raise ApiException(
                 "La transcripción (AWS Transcribe) no completó a tiempo.",
-                code="inference_error", status_code=504,
+                code="inference_error",
+                status_code=504,
             )
-        result = json.loads(s3.get_object(Bucket=bucket, Key=out_key)["Body"].read())
+        result = json.loads(
+            s3.get_object(Bucket=bucket, Key=out_key)["Body"].read()
+        )
         return result["results"]["transcripts"][0]["transcript"]
     except ApiException:
         raise
     except Exception as exc:
         raise ApiException(
             "Fallo en la transcripción (AWS Transcribe).",
-            code="inference_error", status_code=502,
+            code="inference_error",
+            status_code=502,
         ) from exc
     finally:
         # Best-effort cleanup (no claves, no rastro).

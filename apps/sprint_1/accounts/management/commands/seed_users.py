@@ -23,7 +23,13 @@ User = get_user_model()
 DEMO_USERS = [
     ("admin@arketo.dev", Role.SUPERADMIN, "Super Admin", True, True),
     ("cliente@arketo.dev", Role.CLIENTE, "Cliente Demo", False, False),
-    ("arquitecto@arketo.dev", Role.ARQUITECTO, "Arquitecto Demo", False, False),
+    (
+        "arquitecto@arketo.dev",
+        Role.ARQUITECTO,
+        "Arquitecto Demo",
+        False,
+        False,
+    ),
     ("ingeniero@arketo.dev", Role.INGENIERO, "Ingeniero Demo", False, False),
 ]
 
@@ -53,5 +59,7 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f"  + {email} ({role})"))
 
         self.stdout.write(
-            self.style.SUCCESS(f"seed_users: {created} creados, {skipped} ya existían.")
+            self.style.SUCCESS(
+                f"seed_users: {created} creados, {skipped} ya existían."
+            )
         )

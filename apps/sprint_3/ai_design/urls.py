@@ -14,12 +14,28 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register("ai-design/requests", DesignRequestViewSet, basename="design-request")
+router.register(
+    "ai-design/requests", DesignRequestViewSet, basename="design-request"
+)
 
 urlpatterns = [
-    path("ai-design/text", GenerateFromTextView.as_view(), name="ai-design-text"),
-    path("ai-design/audio", GenerateFromAudioView.as_view(), name="ai-design-audio"),
-    path("ai-design/assistant", AssistantView.as_view(), name="ai-design-assistant"),
-    path("ai-design/conversation", ConversationView.as_view(), name="ai-design-conversation"),
+    path(
+        "ai-design/text", GenerateFromTextView.as_view(), name="ai-design-text"
+    ),
+    path(
+        "ai-design/audio",
+        GenerateFromAudioView.as_view(),
+        name="ai-design-audio",
+    ),
+    path(
+        "ai-design/assistant",
+        AssistantView.as_view(),
+        name="ai-design-assistant",
+    ),
+    path(
+        "ai-design/conversation",
+        ConversationView.as_view(),
+        name="ai-design-conversation",
+    ),
     *router.urls,
 ]

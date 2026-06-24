@@ -16,8 +16,13 @@ class Boceto2DSerializer(serializers.ModelSerializer):
     class Meta:
         model = Boceto2D
         fields = [
-            "id", "proyecto", "prompt", "imagen_url",
-            "proveedor_ia", "estado", "created_at",
+            "id",
+            "proyecto",
+            "prompt",
+            "imagen_url",
+            "proveedor_ia",
+            "estado",
+            "created_at",
         ]
         read_only_fields = fields
 
@@ -27,7 +32,9 @@ class Boceto2DSerializer(serializers.ModelSerializer):
 
 class GenerateSketchSerializer(serializers.Serializer):
     prompt = serializers.CharField()
-    project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    project = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
     provider = serializers.ChoiceField(
         choices=["mock", "gemini"], required=False, allow_null=True
     )

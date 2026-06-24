@@ -28,21 +28,29 @@ def _sign(payload: bytes, secret: str = _SECRET) -> str:
 
 def test_webhook_activates_subscription(settings, make_user):
     settings.STRIPE_WEBHOOK_SECRET = _SECRET
-    plan = SubscriptionPlan.objects.create(code="pro", name="Pro", price=Decimal("19"))
+    plan = SubscriptionPlan.objects.create(
+        code="pro", name="Pro", price=Decimal("19")
+    )
     user = make_user()
     Subscription.objects.create(user=user, plan=plan, status="incomplete")
 
-    payload = json.dumps({
-        "type": "checkout.session.completed",
-        "data": {"object": {
-            "client_reference_id": str(user.id),
-            "subscription": "sub_123",
-            "customer": "cus_123",
-        }},
-    }).encode()
+    payload = json.dumps(
+        {
+            "type": "checkout.session.completed",
+            "data": {
+                "object": {
+                    "client_reference_id": str(user.id),
+                    "subscription": "sub_123",
+                    "customer": "cus_123",
+                }
+            },
+        }
+    ).encode()
 
     resp = APIClient().post(
-        "/api/billing/webhook", data=payload, content_type="application/json",
+        "/api/billing/webhook",
+        data=payload,
+        content_type="application/json",
         HTTP_STRIPE_SIGNATURE=_sign(payload),
     )
 
@@ -57,7 +65,9 @@ def test_webhook_activates_subscription(settings, make_user):
 def test_webhook_rejects_bad_signature(settings):
     settings.STRIPE_WEBHOOK_SECRET = _SECRET
     resp = APIClient().post(
-        "/api/billing/webhook", data=b"{}", content_type="application/json",
+        "/api/billing/webhook",
+        data=b"{}",
+        content_type="application/json",
         HTTP_STRIPE_SIGNATURE="t=1,v1=deadbeef",
     )
     assert resp.status_code == 400

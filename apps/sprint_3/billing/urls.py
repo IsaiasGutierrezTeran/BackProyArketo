@@ -14,12 +14,26 @@ from .views import (
 )
 
 router = DefaultRouter()
-router.register("billing/plans", SubscriptionPlanViewSet, basename="billing-plan")
+router.register(
+    "billing/plans", SubscriptionPlanViewSet, basename="billing-plan"
+)
 
 urlpatterns = [
-    path("billing/subscription", MySubscriptionView.as_view(), name="billing-subscription"),
-    path("billing/subscribe", SubscribeView.as_view(), name="billing-subscribe"),
-    path("billing/cancel", CancelSubscriptionView.as_view(), name="billing-cancel"),
-    path("billing/webhook", StripeWebhookView.as_view(), name="billing-webhook"),
+    path(
+        "billing/subscription",
+        MySubscriptionView.as_view(),
+        name="billing-subscription",
+    ),
+    path(
+        "billing/subscribe", SubscribeView.as_view(), name="billing-subscribe"
+    ),
+    path(
+        "billing/cancel",
+        CancelSubscriptionView.as_view(),
+        name="billing-cancel",
+    ),
+    path(
+        "billing/webhook", StripeWebhookView.as_view(), name="billing-webhook"
+    ),
     *router.urls,
 ]

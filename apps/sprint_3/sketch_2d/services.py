@@ -10,7 +10,11 @@ from core.exceptions import ApiException
 from projects.services import projects_for
 
 from .models import Boceto2D, SketchStatus
-from .providers import GeminiSketchProvider, MockSketchProvider, SketchProviderBase
+from .providers import (
+    GeminiSketchProvider,
+    MockSketchProvider,
+    SketchProviderBase,
+)
 
 _PROVIDERS: dict[str, type[SketchProviderBase]] = {
     "mock": MockSketchProvider,
@@ -38,12 +42,19 @@ def _resolve_project(user, project_id: int | None):
         return None
     project = projects_for(user).filter(pk=project_id).first()
     if project is None:
-        raise ApiException("Proyecto no encontrado.", code="not_found", status_code=404)
+        raise ApiException(
+            "Proyecto no encontrado.", code="not_found", status_code=404
+        )
     return project
 
 
-def generate_sketch(*, user, prompt: str, project_id: int | None = None,
-                    provider_name: str | None = None) -> Boceto2D:
+def generate_sketch(
+    *,
+    user,
+    prompt: str,
+    project_id: int | None = None,
+    provider_name: str | None = None,
+) -> Boceto2D:
     """Genera un boceto 2D, lo guarda y devuelve el `Boceto2D`.
 
     La URL absoluta de la imagen la calcula el serializer al leer (en S3 es
@@ -51,7 +62,12 @@ def generate_sketch(*, user, prompt: str, project_id: int | None = None,
     """
     project = _resolve_project(user, project_id)
     provider = get_provider(provider_name)
-    boceto = Boceto2D(usuario=user, proyecto=project, prompt=prompt, proveedor_ia=provider.name)
+    boceto = Boceto2D(
+        usuario=user,
+        proyecto=project,
+        prompt=prompt,
+        proveedor_ia=provider.name,
+    )
 
     try:
         png = provider.generate(prompt)

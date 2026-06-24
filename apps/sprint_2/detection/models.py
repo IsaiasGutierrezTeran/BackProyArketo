@@ -27,8 +27,11 @@ class DetectionJob(BaseModel):
     processing_ms = models.PositiveIntegerField(default=0)
     error = models.TextField(blank=True)
     model3d = models.ForeignKey(
-        "modeling.Model3D", on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="detection_job",
+        "modeling.Model3D",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="detection_job",
     )
 
     def __str__(self) -> str:

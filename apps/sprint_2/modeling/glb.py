@@ -21,8 +21,15 @@ from trimesh.visual import TextureVisuals
 from trimesh.visual.material import PBRMaterial
 
 
-def _pbr(name, base_color, *, roughness, metallic=0.0, alpha_mode="OPAQUE",
-         double_sided=True):
+def _pbr(
+    name,
+    base_color,
+    *,
+    roughness,
+    metallic=0.0,
+    alpha_mode="OPAQUE",
+    double_sided=True,
+):
     """Build a glTF 2.0 PBR material. ``base_color`` is RGBA in 0..1.
 
     ``alpha_mode='BLEND'`` plus alpha < 1 renders translucent in model-viewer.
@@ -41,18 +48,22 @@ def _pbr(name, base_color, *, roughness, metallic=0.0, alpha_mode="OPAQUE",
 WALL_MATERIAL = _pbr("wall", [0.93, 0.92, 0.88, 1.0], roughness=0.9)
 FLOOR_MATERIAL = _pbr("floor", [0.62, 0.45, 0.28, 1.0], roughness=0.6)
 DOOR_MATERIAL = _pbr("door", [0.40, 0.26, 0.15, 1.0], roughness=0.85)
-WINDOW_MATERIAL = _pbr("glass", [0.55, 0.72, 0.85, 0.35], roughness=0.1, alpha_mode="BLEND")
+WINDOW_MATERIAL = _pbr(
+    "glass", [0.55, 0.72, 0.85, 0.35], roughness=0.1, alpha_mode="BLEND"
+)
 BASEBOARD_MATERIAL = _pbr("baseboard", [0.47, 0.47, 0.50, 1.0], roughness=0.8)
 FRAME_MATERIAL = _pbr("frame", [0.55, 0.37, 0.22, 1.0], roughness=0.7)
 
 _OPENING_DEPTH = 0.12  # glass / door panel
-_FRAME_DEPTH = 0.20    # lintel / apron (matches wall depth so it reads continuous)
+_FRAME_DEPTH = (
+    0.20  # lintel / apron (matches wall depth so it reads continuous)
+)
 
 # --- Architectural trim (cheap detail, all axis/extruded boxes) ---
-_BASEBOARD_H = 0.10        # baseboard height (m)
-_BASEBOARD_EXTRA = 0.04    # how much thicker than the wall (sticks out a bit)
-_CASING_W = 0.06           # width/height of the door/window frame profile (m)
-_CASING_DEPTH = 0.22       # a touch deeper than the wall so the casing is visible
+_BASEBOARD_H = 0.10  # baseboard height (m)
+_BASEBOARD_EXTRA = 0.04  # how much thicker than the wall (sticks out a bit)
+_CASING_W = 0.06  # width/height of the door/window frame profile (m)
+_CASING_DEPTH = 0.22  # a touch deeper than the wall so the casing is visible
 _ENABLE_WALL_COPING = False
 _COPING_H = 0.05
 _COPING_EXTRA = 0.03
@@ -115,8 +126,10 @@ def _add_baseboard(scene, sx, sy, ex, ey, thickness, name="baseboard"):
     length = math.hypot(dx, dy)
     if length <= 1e-6:
         return
-    bb = _box([length + thickness, _BASEBOARD_H, thickness + _BASEBOARD_EXTRA],
-              BASEBOARD_MATERIAL)
+    bb = _box(
+        [length + thickness, _BASEBOARD_H, thickness + _BASEBOARD_EXTRA],
+        BASEBOARD_MATERIAL,
+    )
     bb.apply_transform(
         trimesh.transformations.rotation_matrix(-math.atan2(dy, dx), [0, 1, 0])
     )
@@ -159,9 +172,12 @@ def _host_wall(scene_json: dict, px: float, py: float):
     return rot, thickness
 
 
-def _place_in_opening(scene, extents, material, *, x, z, ly, rot, lx=0.0, lz=0.0, name):
+def _place_in_opening(
+    scene, extents, material, *, x, z, ly, rot, lx=0.0, lz=0.0, name
+):
     """Place an opening sub-box: local offset (lx along the wall, lz across it) and
-    vertical center ly, rotated to the host-wall angle, then moved to world (x, z)."""
+    vertical center ly, rotated to the host-wall angle, then moved to world (x, z).
+    """
     mesh = _box(extents, material)
     t1 = trimesh.transformations.translation_matrix([lx, ly, lz])
     r = trimesh.transformations.rotation_matrix(rot, [0, 1, 0])
@@ -170,7 +186,9 @@ def _place_in_opening(scene, extents, material, *, x, z, ly, rot, lx=0.0, lz=0.0
     scene.add_geometry(mesh, geom_name=name)
 
 
-def _add_opening_frame(scene, x, z, width, sill, height, *, rot, casing_depth, name="frame"):
+def _add_opening_frame(
+    scene, x, z, width, sill, height, *, rot, casing_depth, name="frame"
+):
     """A simple casing around a door/window: 2 jambs + head (+ sill for windows).
 
     Aligned to the host wall (``rot``) and flush within its thickness (``casing_depth``).
@@ -179,16 +197,40 @@ def _add_opening_frame(scene, x, z, width, sill, height, *, rot, casing_depth, n
         return
     top = sill + height
     outer_w = width + 2.0 * _CASING_W
-    _place_in_opening(scene, [outer_w, _CASING_W, casing_depth], FRAME_MATERIAL,
-                      x=x, z=z, ly=top + _CASING_W / 2.0, rot=rot, name=name + "_head")
+    _place_in_opening(
+        scene,
+        [outer_w, _CASING_W, casing_depth],
+        FRAME_MATERIAL,
+        x=x,
+        z=z,
+        ly=top + _CASING_W / 2.0,
+        rot=rot,
+        name=name + "_head",
+    )
     jamb_h = height + _CASING_W
     for sign in (-1.0, 1.0):
-        _place_in_opening(scene, [_CASING_W, jamb_h, casing_depth], FRAME_MATERIAL,
-                          x=x, z=z, ly=sill + jamb_h / 2.0, rot=rot,
-                          lx=sign * (width / 2.0 + _CASING_W / 2.0), name=name + "_jamb")
+        _place_in_opening(
+            scene,
+            [_CASING_W, jamb_h, casing_depth],
+            FRAME_MATERIAL,
+            x=x,
+            z=z,
+            ly=sill + jamb_h / 2.0,
+            rot=rot,
+            lx=sign * (width / 2.0 + _CASING_W / 2.0),
+            name=name + "_jamb",
+        )
     if sill > 0.05:
-        _place_in_opening(scene, [outer_w, _CASING_W, casing_depth], FRAME_MATERIAL,
-                          x=x, z=z, ly=sill - _CASING_W / 2.0, rot=rot, name=name + "_sill")
+        _place_in_opening(
+            scene,
+            [outer_w, _CASING_W, casing_depth],
+            FRAME_MATERIAL,
+            x=x,
+            z=z,
+            ly=sill - _CASING_W / 2.0,
+            rot=rot,
+            name=name + "_sill",
+        )
 
 
 def _add_wall_coping(scene, sx, sy, ex, ey, thickness, height, name="coping"):
@@ -197,8 +239,14 @@ def _add_wall_coping(scene, sx, sy, ex, ey, thickness, height, name="coping"):
     length = math.hypot(dx, dy)
     if length <= 1e-6:
         return
-    cap = _box([length + thickness + _COPING_EXTRA, _COPING_H,
-                thickness + _COPING_EXTRA], WALL_MATERIAL)
+    cap = _box(
+        [
+            length + thickness + _COPING_EXTRA,
+            _COPING_H,
+            thickness + _COPING_EXTRA,
+        ],
+        WALL_MATERIAL,
+    )
     cap.apply_transform(
         trimesh.transformations.rotation_matrix(-math.atan2(dy, dx), [0, 1, 0])
     )
@@ -210,8 +258,17 @@ def _add_wall_coping(scene, sx, sy, ex, ey, thickness, height, name="coping"):
     scene.add_geometry(cap, geom_name=name)
 
 
-def _add_opening(scene, opening, material, *, sill: float, default_height: float,
-                 s: float, wall_h: float, scene_json: dict):
+def _add_opening(
+    scene,
+    opening,
+    material,
+    *,
+    sill: float,
+    default_height: float,
+    s: float,
+    wall_h: float,
+    scene_json: dict,
+):
     """Place an opening (door/window) + the wall that frames it + a casing.
 
     The panel (glass/door) sits in the opening; a *lintel* fills the wall up to the
@@ -232,20 +289,52 @@ def _add_opening(scene, opening, material, *, sill: float, default_height: float
     panel_depth = min(_OPENING_DEPTH, max(thickness - 0.04, 0.04))
     frame_depth = thickness  # lintel / apron fill the wall exactly
 
-    _place_in_opening(scene, [width, height, panel_depth], material,
-                      x=x, z=z, ly=sill + height / 2.0, rot=rot,
-                      name=str(opening.get("id") or "opening"))
-    _add_opening_frame(scene, x, z, width, sill, height, rot=rot, casing_depth=thickness,
-                       name=str(opening.get("id") or "opening") + "_frame")
+    _place_in_opening(
+        scene,
+        [width, height, panel_depth],
+        material,
+        x=x,
+        z=z,
+        ly=sill + height / 2.0,
+        rot=rot,
+        name=str(opening.get("id") or "opening"),
+    )
+    _add_opening_frame(
+        scene,
+        x,
+        z,
+        width,
+        sill,
+        height,
+        rot=rot,
+        casing_depth=thickness,
+        name=str(opening.get("id") or "opening") + "_frame",
+    )
 
     frame_w = width + 0.12
     if wall_h - top > 0.05:  # lintel: wall above the opening up to the ceiling
         lh = wall_h - top
-        _place_in_opening(scene, [frame_w, lh, frame_depth], WALL_MATERIAL,
-                          x=x, z=z, ly=top + lh / 2.0, rot=rot, name="lintel")
+        _place_in_opening(
+            scene,
+            [frame_w, lh, frame_depth],
+            WALL_MATERIAL,
+            x=x,
+            z=z,
+            ly=top + lh / 2.0,
+            rot=rot,
+            name="lintel",
+        )
     if sill > 0.05:  # apron: wall below the sill (windows)
-        _place_in_opening(scene, [frame_w, sill, frame_depth], WALL_MATERIAL,
-                          x=x, z=z, ly=sill / 2.0, rot=rot, name="apron")
+        _place_in_opening(
+            scene,
+            [frame_w, sill, frame_depth],
+            WALL_MATERIAL,
+            x=x,
+            z=z,
+            ly=sill / 2.0,
+            rot=rot,
+            name="apron",
+        )
 
 
 def build_glb_bytes(scene_json: dict) -> bytes:
@@ -269,7 +358,9 @@ def build_glb_bytes(scene_json: dict) -> bytes:
         # Extend half a thickness at each end so walls overlap at corners.
         mesh = _box([length + thickness, height, thickness], WALL_MATERIAL)
         mesh.apply_transform(
-            trimesh.transformations.rotation_matrix(-math.atan2(dy, dx), [0, 1, 0])
+            trimesh.transformations.rotation_matrix(
+                -math.atan2(dy, dx), [0, 1, 0]
+            )
         )
         mesh.apply_transform(
             trimesh.transformations.translation_matrix(
@@ -277,20 +368,48 @@ def build_glb_bytes(scene_json: dict) -> bytes:
             )
         )
         scene.add_geometry(mesh, geom_name=str(wall.get("id") or "wall"))
-        _add_baseboard(scene, sx, sy, ex, ey, thickness,
-                       name=str(wall.get("id") or "wall") + "_base")
+        _add_baseboard(
+            scene,
+            sx,
+            sy,
+            ex,
+            ey,
+            thickness,
+            name=str(wall.get("id") or "wall") + "_base",
+        )
         if _ENABLE_WALL_COPING:
-            _add_wall_coping(scene, sx, sy, ex, ey, thickness, height,
-                             name=str(wall.get("id") or "wall") + "_coping")
+            _add_wall_coping(
+                scene,
+                sx,
+                sy,
+                ex,
+                ey,
+                thickness,
+                height,
+                name=str(wall.get("id") or "wall") + "_coping",
+            )
 
     for door in scene_json.get("doors") or []:
-        _add_opening(scene, door, DOOR_MATERIAL, sill=0.0, default_height=2.1,
-                     s=s, wall_h=wall_h, scene_json=scene_json)
+        _add_opening(
+            scene,
+            door,
+            DOOR_MATERIAL,
+            sill=0.0,
+            default_height=2.1,
+            s=s,
+            wall_h=wall_h,
+            scene_json=scene_json,
+        )
     for window in scene_json.get("windows") or []:
         _add_opening(
-            scene, window, WINDOW_MATERIAL,
-            sill=float(window.get("sill_height") or 0.9), default_height=1.1,
-            s=s, wall_h=wall_h, scene_json=scene_json,
+            scene,
+            window,
+            WINDOW_MATERIAL,
+            sill=float(window.get("sill_height") or 0.9),
+            default_height=1.1,
+            s=s,
+            wall_h=wall_h,
+            scene_json=scene_json,
         )
 
     # Guarantee non-empty geometry so the export is always a valid glb.

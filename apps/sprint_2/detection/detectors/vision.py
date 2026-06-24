@@ -22,7 +22,7 @@ _VISION_PROMPT = (
     "arquitectónico (puede estar a color, con muebles, texturas y cotas escritas) "
     "y devuelve SOLO un objeto JSON (sin texto adicional, sin markdown) con este "
     "contrato EXACTO:\n"
-    '{'
+    "{"
     '"image":{"unit":"meters","pixels_per_meter":null},'
     '"scale":{"wall_height":2.7,"default_wall_thickness":0.12},'
     '"walls":[{"id":"w1","start":{"x":0,"y":0},"end":{"x":8,"y":0},"thickness":0.20,"height":2.7,"confidence":0.9}],'
@@ -30,7 +30,7 @@ _VISION_PROMPT = (
     '"windows":[{"id":"win1","wall_id":"w1","position":{"x":2,"y":0},"width":1.2,"height":1.2,"sill_height":1.0,"confidence":0.9}],'
     '"rooms":[{"name":"Sala","x":2,"y":2,"w":4,"h":4,"area":16}],'
     '"bounds":{"min_x":0,"min_y":0,"max_x":8,"max_y":6}'
-    '}\n'
+    "}\n"
     "REGLAS OBLIGATORIAS:\n"
     "- USA LAS COTAS/MEDIDAS escritas en el plano (p. ej. '8.61 m', '13.61 m', "
     "áreas en m²) para fijar la ESCALA REAL en METROS. Si no hay cotas, estima "
@@ -61,7 +61,9 @@ def _sniff_mime(data: bytes) -> str:
 class VisionLLMDetector(DetectorBase):
     name = "gemini-vision"
 
-    def detect(self, image_bytes: bytes, *, options: dict | None = None) -> dict:
+    def detect(
+        self, image_bytes: bytes, *, options: dict | None = None
+    ) -> dict:
         # Lazy imports: keep module import cheap and avoid hard deps at startup.
         from ai_design.providers.gemini import _extract_json
         from core.integrations import gemini_generate_from_image
@@ -75,14 +77,17 @@ class VisionLLMDetector(DetectorBase):
             raise ApiException(
                 "La IA de visión no devolvió un plano válido. Reintenta o prueba "
                 "con otra imagen del plano.",
-                code="inference_error", status_code=502,
+                code="inference_error",
+                status_code=502,
             ) from exc
 
         scene.setdefault("walls", [])
         scene.setdefault("doors", [])
         scene.setdefault("windows", [])
         scene.setdefault("rooms", [])
-        scene.setdefault("scale", {"wall_height": 2.7, "default_wall_thickness": 0.12})
+        scene.setdefault(
+            "scale", {"wall_height": 2.7, "default_wall_thickness": 0.12}
+        )
         scene.setdefault("image", {"unit": "meters", "pixels_per_meter": None})
         scene.setdefault("meta", {"model": "gemini-vision", "version": "1.0"})
         return scene

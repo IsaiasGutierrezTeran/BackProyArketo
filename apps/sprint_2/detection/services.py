@@ -44,8 +44,12 @@ def _read_image_bytes(plan: Plan) -> bytes:
         plan.file.close()
 
 
-def run_pipeline(*, plan: Plan, detector_name: str | None = None,
-                 options: dict | None = None) -> DetectionJob:
+def run_pipeline(
+    *,
+    plan: Plan,
+    detector_name: str | None = None,
+    options: dict | None = None,
+) -> DetectionJob:
     """Run detection for a plan and build its 3D model. Persists a DetectionJob."""
     detector = get_detector(detector_name)
     job = DetectionJob.objects.create(
@@ -62,10 +66,13 @@ def run_pipeline(*, plan: Plan, detector_name: str | None = None,
                 "No se detectaron muros en este plano. Sube un plano técnico de "
                 "líneas (preferible blanco y negro), prueba el detector de visión "
                 "IA, o usa 'Diseñar con IA' por texto.",
-                code="unprocessable", status_code=422,
+                code="unprocessable",
+                status_code=422,
             )
         model3d = create_model_from_scene(
-            project=plan.project, scene_json=scene, source_plan=plan,
+            project=plan.project,
+            scene_json=scene,
+            source_plan=plan,
         )
     except ApiException:
         _fail(job, plan, "Detección fallida.")
@@ -74,7 +81,8 @@ def run_pipeline(*, plan: Plan, detector_name: str | None = None,
         _fail(job, plan, str(exc))
         raise ApiException(
             "Error durante la generación del modelo 3D.",
-            code="inference_error", status_code=500,
+            code="inference_error",
+            status_code=500,
         ) from exc
 
     job.raw_result = scene

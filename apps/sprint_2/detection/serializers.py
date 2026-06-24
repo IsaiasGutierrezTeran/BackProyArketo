@@ -14,9 +14,13 @@ class RunDetectionSerializer(serializers.Serializer):
 
     plan = serializers.IntegerField(min_value=1)
     detector = serializers.ChoiceField(
-        choices=["mock", "maskrcnn", "gemini-vision"], required=False, allow_null=True
+        choices=["mock", "maskrcnn", "gemini-vision"],
+        required=False,
+        allow_null=True,
     )
-    pixels_per_meter = serializers.FloatField(required=False, allow_null=True, min_value=0.0001)
+    pixels_per_meter = serializers.FloatField(
+        required=False, allow_null=True, min_value=0.0001
+    )
     confidence_threshold = serializers.FloatField(
         required=False, allow_null=True, min_value=0.0, max_value=1.0
     )
@@ -30,7 +34,13 @@ class DetectionJobSerializer(serializers.ModelSerializer):
     class Meta:
         model = DetectionJob
         fields = [
-            "id", "plan", "detector", "status", "processing_ms",
-            "error", "model", "created_at",
+            "id",
+            "plan",
+            "detector",
+            "status",
+            "processing_ms",
+            "error",
+            "model",
+            "created_at",
         ]
         read_only_fields = fields

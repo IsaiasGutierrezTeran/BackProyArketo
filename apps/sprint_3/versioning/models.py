@@ -13,8 +13,10 @@ class ProjectVersion(BaseModel):
         "projects.Project", on_delete=models.CASCADE, related_name="versions"
     )
     author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="project_versions",
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="project_versions",
     )
     version_number = models.PositiveIntegerField()
     message = models.TextField(blank=True)
@@ -25,7 +27,8 @@ class ProjectVersion(BaseModel):
         ordering = ["-version_number"]
         constraints = [
             models.UniqueConstraint(
-                fields=["project", "version_number"], name="uniq_project_version"
+                fields=["project", "version_number"],
+                name="uniq_project_version",
             )
         ]
 

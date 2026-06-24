@@ -12,7 +12,11 @@ class IsSuperAdmin(BasePermission):
 
     def has_permission(self, request, view) -> bool:
         user = request.user
-        return bool(user and user.is_authenticated and getattr(user, "is_superadmin", False))
+        return bool(
+            user
+            and user.is_authenticated
+            and getattr(user, "is_superadmin", False)
+        )
 
 
 def role_required(*roles: str) -> type[BasePermission]:
@@ -21,13 +25,18 @@ def role_required(*roles: str) -> type[BasePermission]:
     allowed = set(roles)
 
     class _RolePermission(BasePermission):
-        message = f"Se requiere uno de los roles: {', '.join(sorted(allowed))}."
+        message = (
+            f"Se requiere uno de los roles: {', '.join(sorted(allowed))}."
+        )
 
         def has_permission(self, request, view) -> bool:
             user = request.user
             if not (user and user.is_authenticated):
                 return False
-            return getattr(user, "is_superadmin", False) or getattr(user, "role", None) in allowed
+            return (
+                getattr(user, "is_superadmin", False)
+                or getattr(user, "role", None) in allowed
+            )
 
     return _RolePermission
 
@@ -49,5 +58,7 @@ class IsOwnerOrReadOnly(BasePermission):
             return False
         if request.method in SAFE_METHODS:
             return True
-        owner = getattr(obj, getattr(view, "owner_field", self.owner_field), None)
+        owner = getattr(
+            obj, getattr(view, "owner_field", self.owner_field), None
+        )
         return owner == user or getattr(user, "is_superadmin", False)

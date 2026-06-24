@@ -25,6 +25,8 @@ class DetectorBase(ABC):
     name: str = "base"
 
     @abstractmethod
-    def detect(self, image_bytes: bytes, *, options: dict | None = None) -> dict:
+    def detect(
+        self, image_bytes: bytes, *, options: dict | None = None
+    ) -> dict:
         """Run detection and return the normalized scene (see module docstring)."""
         raise NotImplementedError

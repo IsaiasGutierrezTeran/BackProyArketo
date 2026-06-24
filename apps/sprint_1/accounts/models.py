@@ -27,7 +27,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=150, blank=True)
     phone = models.CharField(max_length=30, blank=True)
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CLIENTE)
+    role = models.CharField(
+        max_length=20, choices=Role.choices, default=Role.CLIENTE
+    )
     avatar = models.ImageField(upload_to="avatars/", blank=True, null=True)
 
     # Reflects the active plan code; the source of truth is the billing app (Sprint 3).

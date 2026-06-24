@@ -15,21 +15,60 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Project',
+            name="Project",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('name', models.CharField(max_length=200)),
-                ('description', models.TextField(blank=True)),
-                ('status', models.CharField(choices=[('draft', 'Borrador'), ('active', 'Activo'), ('archived', 'Archivado')], default='draft', max_length=20)),
-                ('thumbnail', models.ImageField(blank=True, null=True, upload_to='projects/thumbnails/')),
-                ('owner', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='projects', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("name", models.CharField(max_length=200)),
+                ("description", models.TextField(blank=True)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("draft", "Borrador"),
+                            ("active", "Activo"),
+                            ("archived", "Archivado"),
+                        ],
+                        default="draft",
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "thumbnail",
+                    models.ImageField(
+                        blank=True, null=True, upload_to="projects/thumbnails/"
+                    ),
+                ),
+                (
+                    "owner",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="projects",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
-                'indexes': [models.Index(fields=['owner', 'status'], name='projects_pr_owner_i_4798b7_idx')],
+                "ordering": ["-created_at"],
+                "abstract": False,
+                "indexes": [
+                    models.Index(
+                        fields=["owner", "status"],
+                        name="projects_pr_owner_i_4798b7_idx",
+                    )
+                ],
             },
         ),
     ]

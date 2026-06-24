@@ -11,6 +11,10 @@ router = DefaultRouter()
 router.register("sketch2d", Sketch2DViewSet, basename="sketch2d")
 
 urlpatterns = [
-    path("sketch2d/generate", GenerateSketchView.as_view(), name="sketch2d-generate"),
+    path(
+        "sketch2d/generate",
+        GenerateSketchView.as_view(),
+        name="sketch2d-generate",
+    ),
     *router.urls,
 ]

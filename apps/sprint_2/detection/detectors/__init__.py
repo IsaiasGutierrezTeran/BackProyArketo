@@ -5,4 +5,9 @@ from .maskrcnn import MaskRCNNDetector
 from .mock import MockDetector
 from .vision import VisionLLMDetector
 
-__all__ = ["DetectorBase", "MockDetector", "MaskRCNNDetector", "VisionLLMDetector"]
+__all__ = [
+    "DetectorBase",
+    "MockDetector",
+    "MaskRCNNDetector",
+    "VisionLLMDetector",
+]

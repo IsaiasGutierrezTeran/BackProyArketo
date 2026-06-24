@@ -24,7 +24,9 @@ class UserManager(BaseUserManager):
         extra.setdefault("is_superuser", False)
         return self._create_user(email, password, **extra)
 
-    def create_superuser(self, email: str, password: str | None = None, **extra):
+    def create_superuser(
+        self, email: str, password: str | None = None, **extra
+    ):
         extra.setdefault("is_staff", True)
         extra.setdefault("is_superuser", True)
         extra.setdefault("role", "superadmin")

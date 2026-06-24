@@ -23,7 +23,9 @@ def test_upload_plan_ok(make_user, auth_client):
     project = Project.objects.create(owner=user, name="P")
     client = auth_client(user)
     resp = client.post(
-        "/api/plans/", {"project": project.id, "file": _png()}, format="multipart"
+        "/api/plans/",
+        {"project": project.id, "file": _png()},
+        format="multipart",
     )
     assert resp.status_code == 201
     body = resp.json()["data"]
@@ -50,7 +52,9 @@ def test_cannot_upload_to_others_project(make_user, auth_client):
     project = Project.objects.create(owner=other, name="Theirs")
     client = auth_client(user)
     resp = client.post(
-        "/api/plans/", {"project": project.id, "file": _png()}, format="multipart"
+        "/api/plans/",
+        {"project": project.id, "file": _png()},
+        format="multipart",
     )
     assert resp.status_code == 404
 
@@ -61,6 +65,8 @@ def test_cliente_cannot_upload_plan(make_user, auth_client):
     project = Project.objects.create(owner=user, name="P")
     client = auth_client(user)
     resp = client.post(
-        "/api/plans/", {"project": project.id, "file": _png()}, format="multipart"
+        "/api/plans/",
+        {"project": project.id, "file": _png()},
+        format="multipart",
     )
     assert resp.status_code == 403

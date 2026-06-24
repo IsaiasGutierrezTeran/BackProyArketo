@@ -26,19 +26,25 @@ def _scene_span(scene_json: dict) -> float:
     for w in scene_json.get("walls") or []:
         for pt in (w.get("start") or {}, w.get("end") or {}):
             if isinstance(pt.get("x"), (int, float)):
-                xs.append(pt["x"]); ys.append(pt.get("y", 0) or 0)
+                xs.append(pt["x"])
+                ys.append(pt.get("y", 0) or 0)
     for coll in ("doors", "windows"):
         for d in scene_json.get(coll) or []:
             p = d.get("position") or {}
             if isinstance(p.get("x"), (int, float)):
-                xs.append(p["x"]); ys.append(p.get("y", 0) or 0)
+                xs.append(p["x"])
+                ys.append(p.get("y", 0) or 0)
     if not xs:
         return 0.0
     return max(max(xs) - min(xs), max(ys) - min(ys))
 
 
-def _ensure_metric_scale(scene_json: dict, *, trigger_below: float = 5.5,
-                         target_longest: float = 12.0) -> dict:
+def _ensure_metric_scale(
+    scene_json: dict,
+    *,
+    trigger_below: float = 5.5,
+    target_longest: float = 12.0,
+) -> dict:
     """Rescale a normalized/tiny scene so its longest side ~= ``target_longest`` m.
 
     Detector output without ``pixels_per_meter`` comes back in 0..1 units, which
@@ -79,12 +85,14 @@ def _ensure_metric_scale(scene_json: dict, *, trigger_below: float = 5.5,
 
 
 def _set_only_current(project, model: Model3D) -> None:
-    Model3D.objects.filter(project=project, is_current=True).exclude(pk=model.pk).update(
-        is_current=False
-    )
+    Model3D.objects.filter(project=project, is_current=True).exclude(
+        pk=model.pk
+    ).update(is_current=False)
 
 
-def create_model_from_scene(*, project, scene_json: dict, source_plan=None) -> Model3D:
+def create_model_from_scene(
+    *, project, scene_json: dict, source_plan=None
+) -> Model3D:
     """Build a GLB from a scene and store it as the project's current model (CU5)."""
     scene_json = _ensure_metric_scale(scene_json)
     glb = build_glb_bytes(scene_json)
@@ -98,7 +106,9 @@ def create_model_from_scene(*, project, scene_json: dict, source_plan=None) -> M
         unit=(scene_json.get("image") or {}).get("unit", "meters"),
         is_current=True,
     )
-    model.glb_file.save(f"project_{project.id}.glb", ContentFile(glb), save=False)
+    model.glb_file.save(
+        f"project_{project.id}.glb", ContentFile(glb), save=False
+    )
     model.save()
     _set_only_current(project, model)
     mark_project_active(project)
@@ -111,7 +121,9 @@ def replace_scene(*, model: Model3D, scene_json: dict) -> Model3D:
     model.scene_json = scene_json
     model.bounds = scene_json.get("bounds")
     model.element_count = _element_count(scene_json)
-    model.glb_file.save(f"project_{model.project_id}.glb", ContentFile(glb), save=False)
+    model.glb_file.save(
+        f"project_{model.project_id}.glb", ContentFile(glb), save=False
+    )
     model.save()
     return model
 
@@ -136,8 +148,16 @@ def _inspect_glb(raw: bytes) -> tuple[dict | None, int]:
         box = loaded.bounds
         if box is not None:
             bounds = {
-                "min": {"x": float(box[0][0]), "y": float(box[0][1]), "z": float(box[0][2])},
-                "max": {"x": float(box[1][0]), "y": float(box[1][1]), "z": float(box[1][2])},
+                "min": {
+                    "x": float(box[0][0]),
+                    "y": float(box[0][1]),
+                    "z": float(box[0][2]),
+                },
+                "max": {
+                    "x": float(box[1][0]),
+                    "y": float(box[1][1]),
+                    "z": float(box[1][2]),
+                },
             }
     except Exception:
         bounds = None

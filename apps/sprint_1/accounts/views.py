@@ -48,7 +48,9 @@ class RegisterView(APIView):
         summary="Registrar un nuevo usuario (rol cliente)",
     )
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data, context={"request": request})
+        serializer = RegisterSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         user = services.register_user(**serializer.validated_data)
         return Response(
@@ -57,7 +59,9 @@ class RegisterView(APIView):
         )
 
 
-@extend_schema(tags=["auth"], summary="Iniciar sesión (devuelve access, refresh y user)")
+@extend_schema(
+    tags=["auth"], summary="Iniciar sesión (devuelve access, refresh y user)"
+)
 class LoginView(TokenObtainPairView):
     """Email + password -> {access, refresh, user}. Rate-limited (HU-2)."""
 
@@ -73,13 +77,20 @@ class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
-        request={"application/json": {"type": "object", "properties": {"refresh": {"type": "string"}}}},
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {"refresh": {"type": "string"}},
+            }
+        },
         responses={200: OpenApiResponse(description="Sesión cerrada.")},
         summary="Cerrar sesión (invalida el refresh token)",
     )
     def post(self, request):
         services.logout(request.data.get("refresh"))
-        return Response({"detail": "Sesión cerrada."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Sesión cerrada."}, status=status.HTTP_200_OK
+        )
 
 
 @extend_schema(tags=["auth"])
@@ -90,7 +101,9 @@ class MeView(APIView):
 
     @extend_schema(responses={200: UserSerializer}, summary="Ver mi perfil")
     def get(self, request):
-        return Response(UserSerializer(request.user, context={"request": request}).data)
+        return Response(
+            UserSerializer(request.user, context={"request": request}).data
+        )
 
     @extend_schema(
         request=ProfileUpdateSerializer,
@@ -99,11 +112,18 @@ class MeView(APIView):
     )
     def patch(self, request):
         serializer = ProfileUpdateSerializer(
-            request.user, data=request.data, partial=True, context={"request": request}
+            request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
-        user = services.update_profile(request.user, **serializer.validated_data)
-        return Response(UserSerializer(user, context={"request": request}).data)
+        user = services.update_profile(
+            request.user, **serializer.validated_data
+        )
+        return Response(
+            UserSerializer(user, context={"request": request}).data
+        )
 
 
 @extend_schema(tags=["auth"])
@@ -114,18 +134,24 @@ class ChangePasswordView(APIView):
 
     @extend_schema(
         request=ChangePasswordSerializer,
-        responses={200: OpenApiResponse(description="Contraseña actualizada.")},
+        responses={
+            200: OpenApiResponse(description="Contraseña actualizada.")
+        },
         summary="Cambiar mi contraseña",
     )
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data, context={"request": request})
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
         serializer.is_valid(raise_exception=True)
         services.change_password(
             request.user,
             current_password=serializer.validated_data["current_password"],
             new_password=serializer.validated_data["new_password"],
         )
-        return Response({"detail": "Contraseña actualizada."}, status=status.HTTP_200_OK)
+        return Response(
+            {"detail": "Contraseña actualizada."}, status=status.HTTP_200_OK
+        )
 
 
 @extend_schema(tags=["users"])
@@ -137,7 +163,9 @@ class UserAdminViewSet(viewsets.ModelViewSet):
     permission_classes = [IsSuperAdmin]
 
     def perform_create(self, serializer):
-        serializer.instance = services.admin_create_user(**serializer.validated_data)
+        serializer.instance = services.admin_create_user(
+            **serializer.validated_data
+        )
 
     def perform_update(self, serializer):
         serializer.instance = services.admin_update_user(
@@ -148,9 +176,14 @@ class UserAdminViewSet(viewsets.ModelViewSet):
         # Baja lógica (HU-1): deactivate instead of hard-deleting.
         services.deactivate_user(instance)
 
-    @extend_schema(request=None, responses={200: AdminUserSerializer},
-                   summary="Reactivar un usuario dado de baja")
+    @extend_schema(
+        request=None,
+        responses={200: AdminUserSerializer},
+        summary="Reactivar un usuario dado de baja",
+    )
     @action(detail=True, methods=["post"])
     def reactivate(self, request, pk=None):
         user = services.reactivate_user(self.get_object())
-        return Response(AdminUserSerializer(user, context={"request": request}).data)
+        return Response(
+            AdminUserSerializer(user, context={"request": request}).data
+        )

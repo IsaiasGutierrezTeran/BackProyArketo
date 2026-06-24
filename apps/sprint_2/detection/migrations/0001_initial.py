@@ -7,25 +7,47 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='DetectionJob',
+            name="DetectionJob",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('detector', models.CharField(max_length=20)),
-                ('status', models.CharField(choices=[('pending', 'Pendiente'), ('running', 'Ejecutando'), ('completed', 'Completado'), ('failed', 'Fallido')], default='pending', max_length=20)),
-                ('raw_result', models.JSONField(blank=True, null=True)),
-                ('processing_ms', models.PositiveIntegerField(default=0)),
-                ('error', models.TextField(blank=True)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(auto_now_add=True, db_index=True),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                ("detector", models.CharField(max_length=20)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pendiente"),
+                            ("running", "Ejecutando"),
+                            ("completed", "Completado"),
+                            ("failed", "Fallido"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                    ),
+                ),
+                ("raw_result", models.JSONField(blank=True, null=True)),
+                ("processing_ms", models.PositiveIntegerField(default=0)),
+                ("error", models.TextField(blank=True)),
             ],
             options={
-                'ordering': ['-created_at'],
-                'abstract': False,
+                "ordering": ["-created_at"],
+                "abstract": False,
             },
         ),
     ]

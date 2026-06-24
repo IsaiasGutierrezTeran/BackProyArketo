@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Budget, BudgetItem, BudgetReview, Material, MaterialCategory
+from .models import (
+    Budget,
+    BudgetItem,
+    BudgetReview,
+    Material,
+    MaterialCategory,
+)
 
 
 @admin.register(MaterialCategory)
@@ -11,7 +17,14 @@ class MaterialCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Material)
 class MaterialAdmin(admin.ModelAdmin):
-    list_display = ["name", "category", "unit", "unit_price", "block_quality", "is_active"]
+    list_display = [
+        "name",
+        "category",
+        "unit",
+        "unit_price",
+        "block_quality",
+        "is_active",
+    ]
     list_filter = ["block_quality", "is_active", "category"]
     search_fields = ["name"]
 
@@ -24,7 +37,14 @@ class BudgetItemInline(admin.TabularInline):
 
 @admin.register(Budget)
 class BudgetAdmin(admin.ModelAdmin):
-    list_display = ["id", "project", "status", "total", "currency", "created_at"]
+    list_display = [
+        "id",
+        "project",
+        "status",
+        "total",
+        "currency",
+        "created_at",
+    ]
     list_filter = ["status", "currency"]
     inlines = [BudgetItemInline]
 

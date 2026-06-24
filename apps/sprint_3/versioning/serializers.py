@@ -8,13 +8,20 @@ from .models import ProjectVersion
 
 
 class ProjectVersionSerializer(serializers.ModelSerializer):
-    author_email = serializers.EmailField(source="author.email", read_only=True)
+    author_email = serializers.EmailField(
+        source="author.email", read_only=True
+    )
 
     class Meta:
         model = ProjectVersion
         fields = [
-            "id", "project", "version_number", "message",
-            "author_email", "snapshot", "created_at",
+            "id",
+            "project",
+            "version_number",
+            "message",
+            "author_email",
+            "snapshot",
+            "created_at",
         ]
         read_only_fields = fields
 

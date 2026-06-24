@@ -49,7 +49,9 @@ class MaterialViewSet(_ReadAnyWriteSuperAdmin):
         # El superadmin puede verlos con ?include_inactive=true para gestionarlos.
         qs = super().get_queryset()
         user = getattr(self.request, "user", None)
-        include_inactive = self.request.query_params.get("include_inactive") == "true"
+        include_inactive = (
+            self.request.query_params.get("include_inactive") == "true"
+        )
         if getattr(user, "is_superadmin", False) and include_inactive:
             return qs
         return qs.filter(is_active=True)
@@ -75,8 +77,11 @@ class BudgetViewSet(
         project = self.request.query_params.get("project")
         return qs.filter(project=project) if project else qs
 
-    @extend_schema(request=BudgetCreateSerializer, responses={201: BudgetSerializer},
-                   summary="Crear presupuesto (calcula subtotales y total)")
+    @extend_schema(
+        request=BudgetCreateSerializer,
+        responses={201: BudgetSerializer},
+        summary="Crear presupuesto (calcula subtotales y total)",
+    )
     def create(self, request):
         data = BudgetCreateSerializer(data=request.data)
         data.is_valid(raise_exception=True)
@@ -93,8 +98,11 @@ class BudgetViewSet(
             status=status.HTTP_201_CREATED,
         )
 
-    @extend_schema(request=EstimateBudgetSerializer, responses={201: BudgetSerializer},
-                   summary="Estimar materiales desde el modelo 3D y crear un borrador")
+    @extend_schema(
+        request=EstimateBudgetSerializer,
+        responses={201: BudgetSerializer},
+        summary="Estimar materiales desde el modelo 3D y crear un borrador",
+    )
     @action(detail=False, methods=["post"])
     def estimate(self, request):
         data = EstimateBudgetSerializer(data=request.data)
@@ -107,26 +115,42 @@ class BudgetViewSet(
             status=status.HTTP_201_CREATED,
         )
 
-    @extend_schema(request=None, responses={200: BudgetSerializer},
-                   summary="Enviar el presupuesto a revisión")
+    @extend_schema(
+        request=None,
+        responses={200: BudgetSerializer},
+        summary="Enviar el presupuesto a revisión",
+    )
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
-        budget = services.submit_budget(user=request.user, budget=self.get_object())
-        return Response(BudgetSerializer(budget, context={"request": request}).data)
+        budget = services.submit_budget(
+            user=request.user, budget=self.get_object()
+        )
+        return Response(
+            BudgetSerializer(budget, context={"request": request}).data
+        )
 
     def perform_destroy(self, instance):
         services.delete_budget(user=self.request.user, budget=instance)
 
-    @extend_schema(responses={200: None}, summary="Descargar el presupuesto en PDF")
+    @extend_schema(
+        responses={200: None}, summary="Descargar el presupuesto en PDF"
+    )
     @action(detail=True, methods=["get"], url_path="export.pdf")
     def export_pdf(self, request, pk=None):
         budget = self.get_object()
-        resp = HttpResponse(budget_report_pdf(budget), content_type="application/pdf")
-        resp["Content-Disposition"] = f'inline; filename="presupuesto-{budget.id}.pdf"'
+        resp = HttpResponse(
+            budget_report_pdf(budget), content_type="application/pdf"
+        )
+        resp["Content-Disposition"] = (
+            f'inline; filename="presupuesto-{budget.id}.pdf"'
+        )
         return resp
 
-    @extend_schema(request=BudgetReviewInputSerializer, responses={200: BudgetSerializer},
-                   summary="Revisión del Ingeniero (aprobar/observar/rechazar)")
+    @extend_schema(
+        request=BudgetReviewInputSerializer,
+        responses={200: BudgetSerializer},
+        summary="Revisión del Ingeniero (aprobar/observar/rechazar)",
+    )
     @action(detail=True, methods=["post"])
     def review(self, request, pk=None):
         data = BudgetReviewInputSerializer(data=request.data)
@@ -137,4 +161,6 @@ class BudgetViewSet(
             decision=data.validated_data["decision"],
             comments=data.validated_data.get("comments", ""),
         )
-        return Response(BudgetSerializer(budget, context={"request": request}).data)
+        return Response(
+            BudgetSerializer(budget, context={"request": request}).data
+        )

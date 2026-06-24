@@ -11,10 +11,17 @@ pytestmark = pytest.mark.django_db
 
 
 def _scene(n_walls: int) -> dict:
-    return {"walls": [
-        {"start": {"x": 0, "y": i}, "end": {"x": 3, "y": i}, "thickness": 0.15, "height": 2.7}
-        for i in range(n_walls)
-    ]}
+    return {
+        "walls": [
+            {
+                "start": {"x": 0, "y": i},
+                "end": {"x": 3, "y": i},
+                "thickness": 0.15,
+                "height": 2.7,
+            }
+            for i in range(n_walls)
+        ]
+    }
 
 
 def test_diff_reports_modified_model(make_user, auth_client):
@@ -25,15 +32,23 @@ def test_diff_reports_modified_model(make_user, auth_client):
         project=project, scene_json=_scene(1), element_count=1, is_current=True
     )
 
-    v1 = client.post("/api/versions/commit/", {"project": project.id, "message": "v1"},
-                     format="json").json()["data"]
+    v1 = client.post(
+        "/api/versions/commit/",
+        {"project": project.id, "message": "v1"},
+        format="json",
+    ).json()["data"]
 
     model.scene_json = _scene(3)
     model.save(update_fields=["scene_json"])
-    v2 = client.post("/api/versions/commit/", {"project": project.id, "message": "v2"},
-                     format="json").json()["data"]
+    v2 = client.post(
+        "/api/versions/commit/",
+        {"project": project.id, "message": "v2"},
+        format="json",
+    ).json()["data"]
 
-    resp = client.get("/api/versions/diff/", {"from": v1["id"], "to": v2["id"]})
+    resp = client.get(
+        "/api/versions/diff/", {"from": v1["id"], "to": v2["id"]}
+    )
     assert resp.status_code == 200
     diff = resp.json()["data"]
     assert diff["from_version"] == v1["version_number"]

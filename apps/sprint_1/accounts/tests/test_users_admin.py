@@ -23,8 +23,12 @@ def test_superadmin_can_create_and_list_users(make_user, auth_client):
 
     created = client.post(
         "/api/users/",
-        {"email": "ing@test.dev", "password": "Str0ngPass123",
-         "role": "ingeniero", "full_name": "Ing"},
+        {
+            "email": "ing@test.dev",
+            "password": "Str0ngPass123",
+            "role": "ingeniero",
+            "full_name": "Ing",
+        },
         format="json",
     )
     assert created.status_code == 201

@@ -27,7 +27,12 @@ from budget.models import Material
 from budget.services import create_budget, review_budget, submit_budget
 from detection.services import run_pipeline
 from plans.models import Plan, PlanFormat
-from projects.models import MembershipRole, Project, ProjectMembership, ProjectStatus
+from projects.models import (
+    MembershipRole,
+    Project,
+    ProjectMembership,
+    ProjectStatus,
+)
 from projects.services import add_comment, add_member
 from risk.services import analyze_model
 from versioning.services import commit_version
@@ -90,7 +95,9 @@ def _plan_png(area: int) -> bytes:
 
 
 class Command(BaseCommand):
-    help = "Puebla casi todo el sistema con datos demo realistas (idempotente)."
+    help = (
+        "Puebla casi todo el sistema con datos demo realistas (idempotente)."
+    )
 
     def handle(self, *args, **options):
         call_command("seed_users")
@@ -109,9 +116,13 @@ class Command(BaseCommand):
             owner = owners[i % len(owners)]
             if Project.objects.filter(owner=owner, name=name).exists():
                 continue
-            self._build_project(i, name, area, status, owner, arquitectos, engineer, materials)
+            self._build_project(
+                i, name, area, status, owner, arquitectos, engineer, materials
+            )
             created += 1
-            self.stdout.write(self.style.SUCCESS(f"  + {name} ({owner.email})"))
+            self.stdout.write(
+                self.style.SUCCESS(f"  + {name} ({owner.email})")
+            )
 
         self._subscriptions(clientes, arquitectos)
         self._summary(created)
@@ -120,36 +131,50 @@ class Command(BaseCommand):
     def _ensure_users(self) -> list:
         for email, full_name, role in EXTRA_USERS:
             if not User.objects.filter(email=email).exists():
-                User.objects.create_user(email=email, password=PWD, full_name=full_name, role=role)
+                User.objects.create_user(
+                    email=email, password=PWD, full_name=full_name, role=role
+                )
         return list(User.objects.all())
 
     # --------------------------------------------------------------- projects
-    def _build_project(self, i, name, area, status, owner, arquitectos, engineer, materials):
+    def _build_project(
+        self, i, name, area, status, owner, arquitectos, engineer, materials
+    ):
         project = Project.objects.create(
-            owner=owner, name=name, status=status,
+            owner=owner,
+            name=name,
+            status=status,
             description=f"Vivienda de {area} m² construidos. Datos de demostración.",
         )
 
         # Plan + 3D model (mock detector)
         png = _plan_png(area)
         plan = Plan.objects.create(
-            project=project, uploaded_by=owner,
-            original_format=PlanFormat.PNG, size_bytes=len(png),
+            project=project,
+            uploaded_by=owner,
+            original_format=PlanFormat.PNG,
+            size_bytes=len(png),
         )
-        plan.file.save(f"demo_plan_{project.id}.png", ContentFile(png), save=True)
+        plan.file.save(
+            f"demo_plan_{project.id}.png", ContentFile(png), save=True
+        )
         job = run_pipeline(plan=plan, detector_name="mock")
         model = job.model3d
 
         # Budget with Bolivian prices
         items = [
             {"material": materials[n].id, "quantity": f"{area * q:.2f}"}
-            for n, q in BASKET if n in materials
+            for n, q in BASKET
+            if n in materials
         ]
         if items:
             budget = create_budget(
-                user=owner, project_id=project.id, items=items,
+                user=owner,
+                project_id=project.id,
+                items=items,
                 labor_people=max(4, area // 25),
-                labor_cost=Decimal(area) * Decimal("350"), currency="Bs",
+                labor_cost=Decimal(area) * Decimal("350"),
+                currency="Bs",
             )
             # Vary the workflow: draft / submitted / reviewed.
             phase = i % 3
@@ -158,9 +183,14 @@ class Command(BaseCommand):
             if phase == 2 and engineer:
                 decision = "approved" if i % 2 == 0 else "observed"
                 review_budget(
-                    budget=budget, reviewer=engineer, decision=decision,
-                    comments="Revisado por ingeniería estructural." if decision == "approved"
-                    else "Revisar cuantía de acero en vigas.",
+                    budget=budget,
+                    reviewer=engineer,
+                    decision=decision,
+                    comments=(
+                        "Revisado por ingeniería estructural."
+                        if decision == "approved"
+                        else "Revisar cuantía de acero en vigas."
+                    ),
                 )
 
         # Risk analysis on the generated model
@@ -171,15 +201,27 @@ class Command(BaseCommand):
         if owner.role == Role.CLIENTE and arquitectos:
             collaborator = arquitectos[i % len(arquitectos)]
             if collaborator.id != owner.id:
-                add_member(owner=owner, project_id=project.id,
-                           email=collaborator.email, role=MembershipRole.EDITOR)
+                add_member(
+                    owner=owner,
+                    project_id=project.id,
+                    email=collaborator.email,
+                    role=MembershipRole.EDITOR,
+                )
 
         # A couple of comments
-        add_comment(user=owner, project=project, body="Subí el plano inicial, revisemos el presupuesto.")
+        add_comment(
+            user=owner,
+            project=project,
+            body="Subí el plano inicial, revisemos el presupuesto.",
+        )
 
         # A saved version for some projects
         if i % 2 == 0:
-            commit_version(user=owner, project_id=project.id, message="Versión inicial del proyecto")
+            commit_version(
+                user=owner,
+                project_id=project.id,
+                message="Versión inicial del proyecto",
+            )
 
     # ----------------------------------------------------------- subscriptions
     def _subscriptions(self, clientes, arquitectos):
@@ -201,14 +243,16 @@ class Command(BaseCommand):
         from modeling.models import Model3D
         from risk.models import RiskAnalysis
 
-        self.stdout.write(self.style.SUCCESS(
-            "\nseed_demo listo:"
-            f"\n  usuarios:       {User.objects.count()}"
-            f"\n  proyectos:      {Project.objects.count()} (+{created} nuevos)"
-            f"\n  planos:         {Plan.objects.count()}"
-            f"\n  modelos 3D:     {Model3D.objects.count()}"
-            f"\n  presupuestos:   {Budget.objects.count()}"
-            f"\n  análisis riesgo:{RiskAnalysis.objects.count()}"
-            f"\n  suscripciones:  {Subscription.objects.count()}"
-            f"\n  materiales:     {Material.objects.count()}"
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                "\nseed_demo listo:"
+                f"\n  usuarios:       {User.objects.count()}"
+                f"\n  proyectos:      {Project.objects.count()} (+{created} nuevos)"
+                f"\n  planos:         {Plan.objects.count()}"
+                f"\n  modelos 3D:     {Model3D.objects.count()}"
+                f"\n  presupuestos:   {Budget.objects.count()}"
+                f"\n  análisis riesgo:{RiskAnalysis.objects.count()}"
+                f"\n  suscripciones:  {Subscription.objects.count()}"
+                f"\n  materiales:     {Material.objects.count()}"
+            )
+        )

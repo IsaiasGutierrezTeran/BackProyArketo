@@ -36,7 +36,10 @@ class SubscriptionPlanViewSet(viewsets.ModelViewSet):
 class MySubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(responses={200: SubscriptionSerializer}, summary="Mi suscripción actual")
+    @extend_schema(
+        responses={200: SubscriptionSerializer},
+        summary="Mi suscripción actual",
+    )
     def get(self, request):
         subscription = services.get_subscription(request.user)
         return Response(SubscriptionSerializer(subscription).data)
@@ -46,8 +49,11 @@ class MySubscriptionView(APIView):
 class SubscribeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=SubscribeSerializer, responses={200: SubscriptionSerializer},
-                   summary="Suscribirse / cambiar de plan")
+    @extend_schema(
+        request=SubscribeSerializer,
+        responses={200: SubscriptionSerializer},
+        summary="Suscribirse / cambiar de plan",
+    )
     def post(self, request):
         data = SubscribeSerializer(data=request.data)
         data.is_valid(raise_exception=True)
@@ -63,8 +69,11 @@ class SubscribeView(APIView):
 class CancelSubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(request=None, responses={200: SubscriptionSerializer},
-                   summary="Cancelar la suscripción")
+    @extend_schema(
+        request=None,
+        responses={200: SubscriptionSerializer},
+        summary="Cancelar la suscripción",
+    )
     def post(self, request):
         subscription = services.cancel(user=request.user)
         return Response(SubscriptionSerializer(subscription).data)
@@ -81,7 +90,9 @@ class StripeWebhookView(APIView):
     permission_classes = [AllowAny]
     authentication_classes: list = []
 
-    @extend_schema(request=None, responses={200: dict}, summary="Webhook de Stripe")
+    @extend_schema(
+        request=None, responses={200: dict}, summary="Webhook de Stripe"
+    )
     def post(self, request):
         # Use the raw body for signature verification (do NOT touch request.data).
         event = services.process_stripe_webhook(

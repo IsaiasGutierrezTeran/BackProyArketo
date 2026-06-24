@@ -30,7 +30,9 @@ def test_text_generates_scene_and_model(make_user, auth_client):
 
 def test_text_without_project_has_no_model(make_user, auth_client):
     client = auth_client(make_user(role=Role.ARQUITECTO))
-    resp = client.post("/api/ai-design/text", {"prompt": "un cuarto"}, format="json")
+    resp = client.post(
+        "/api/ai-design/text", {"prompt": "un cuarto"}, format="json"
+    )
     assert resp.status_code == 201
     assert resp.json()["data"]["model"] is None
 
@@ -38,7 +40,9 @@ def test_text_without_project_has_no_model(make_user, auth_client):
 def test_assistant_appends_reply(make_user, auth_client):
     client = auth_client(make_user(role=Role.ARQUITECTO))
     resp = client.post(
-        "/api/ai-design/assistant", {"message": "hola, quiero una casa"}, format="json"
+        "/api/ai-design/assistant",
+        {"message": "hola, quiero una casa"},
+        format="json",
     )
     assert resp.status_code == 201
     messages = resp.json()["data"]["result"]["messages"]
@@ -50,9 +54,13 @@ def test_audio_transcribes_and_generates(make_user, auth_client):
     user = make_user(role=Role.ARQUITECTO)
     project = Project.objects.create(owner=user, name="P")
     client = auth_client(user)
-    audio = SimpleUploadedFile("voz.wav", b"RIFF0000WAVE", content_type="audio/wav")
+    audio = SimpleUploadedFile(
+        "voz.wav", b"RIFF0000WAVE", content_type="audio/wav"
+    )
     resp = client.post(
-        "/api/ai-design/audio", {"audio": audio, "project": project.id}, format="multipart"
+        "/api/ai-design/audio",
+        {"audio": audio, "project": project.id},
+        format="multipart",
     )
     assert resp.status_code == 201
     data = resp.json()["data"]

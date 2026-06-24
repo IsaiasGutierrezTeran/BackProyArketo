@@ -17,8 +17,18 @@ class DesignRequestSerializer(serializers.ModelSerializer):
     class Meta:
         model = DesignRequest
         fields = [
-            "id", "mode", "project", "prompt_text", "transcript", "provider",
-            "status", "result", "model", "audio_url", "error", "created_at",
+            "id",
+            "mode",
+            "project",
+            "prompt_text",
+            "transcript",
+            "provider",
+            "status",
+            "result",
+            "model",
+            "audio_url",
+            "error",
+            "created_at",
         ]
         read_only_fields = fields
 
@@ -28,24 +38,40 @@ class DesignRequestSerializer(serializers.ModelSerializer):
 
 class TextDesignSerializer(serializers.Serializer):
     prompt = serializers.CharField()
-    project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)
+    project = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
+    provider = serializers.ChoiceField(
+        choices=["mock", "gemini", "aws"], required=False, allow_null=True
+    )
 
 
 class AudioDesignSerializer(serializers.Serializer):
     audio = serializers.FileField()
-    project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)
+    project = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
+    provider = serializers.ChoiceField(
+        choices=["mock", "gemini", "aws"], required=False, allow_null=True
+    )
 
 
 class AssistantSerializer(serializers.Serializer):
     message = serializers.CharField()
-    request = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    project = serializers.IntegerField(required=False, allow_null=True, min_value=1)
-    provider = serializers.ChoiceField(choices=["mock", "gemini", "aws"], required=False, allow_null=True)
+    request = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
+    project = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
+    provider = serializers.ChoiceField(
+        choices=["mock", "gemini", "aws"], required=False, allow_null=True
+    )
 
 
 class ConversationSerializer(serializers.Serializer):
     """Historial del chat de Diseño con IA (lista de turnos)."""
 
-    turns = serializers.ListField(child=serializers.DictField(), required=False, default=list)
+    turns = serializers.ListField(
+        child=serializers.DictField(), required=False, default=list
+    )

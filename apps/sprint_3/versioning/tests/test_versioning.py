@@ -10,13 +10,32 @@ from projects.models import Project
 pytestmark = pytest.mark.django_db
 
 ONE_WALL = {
-    "walls": [{"id": "w1", "start": {"x": 0, "y": 0}, "end": {"x": 3, "y": 0}, "thickness": 0.15, "height": 2.7}],
-    "doors": [], "windows": [], "bounds": {}, "image": {"unit": "meters"}, "meta": {},
+    "walls": [
+        {
+            "id": "w1",
+            "start": {"x": 0, "y": 0},
+            "end": {"x": 3, "y": 0},
+            "thickness": 0.15,
+            "height": 2.7,
+        }
+    ],
+    "doors": [],
+    "windows": [],
+    "bounds": {},
+    "image": {"unit": "meters"},
+    "meta": {},
 }
 TWO_WALLS = {
     **ONE_WALL,
-    "walls": ONE_WALL["walls"] + [
-        {"id": "w2", "start": {"x": 3, "y": 0}, "end": {"x": 3, "y": 3}, "thickness": 0.15, "height": 2.7}
+    "walls": ONE_WALL["walls"]
+    + [
+        {
+            "id": "w2",
+            "start": {"x": 3, "y": 0},
+            "end": {"x": 3, "y": 3},
+            "thickness": 0.15,
+            "height": 2.7,
+        }
     ],
 }
 
@@ -28,7 +47,9 @@ def test_commit_then_restore_rolls_back(make_user, auth_client):
     client = auth_client(user)
 
     committed = client.post(
-        "/api/versions/commit/", {"project": project.id, "message": "v1"}, format="json"
+        "/api/versions/commit/",
+        {"project": project.id, "message": "v1"},
+        format="json",
     )
     assert committed.status_code == 201
     assert committed.json()["data"]["version_number"] == 1

@@ -30,7 +30,12 @@ class ApiException(APIException):
     default_detail = "Solicitud inválida."
     default_code = "bad_request"
 
-    def __init__(self, detail=None, code: str | None = None, status_code: int | None = None):
+    def __init__(
+        self,
+        detail=None,
+        code: str | None = None,
+        status_code: int | None = None,
+    ):
         if status_code is not None:
             self.status_code = status_code
         self._code = code or self.default_code
@@ -56,8 +61,15 @@ def api_exception_handler(exc, context):
     if isinstance(detail, dict) and "detail" in detail and len(detail) == 1:
         detail = detail["detail"]
 
-    response.data = {"success": False, "error": {"code": code, "detail": detail}}
-    return Response(response.data, status=response.status_code, headers=_safe_headers(response))
+    response.data = {
+        "success": False,
+        "error": {"code": code, "detail": detail},
+    }
+    return Response(
+        response.data,
+        status=response.status_code,
+        headers=_safe_headers(response),
+    )
 
 
 def _safe_headers(response) -> dict:
